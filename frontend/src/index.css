@@ -1,0 +1,9 @@
+/* Harici Fontlar ve CDN CSS'leri */
+@import url('https://fonts.googleapis.com/css?family=Montserrat:200,300,400,500,600|Roboto:400');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.7.0/css/perfect-scrollbar.min.css');
+
+/* Public klasöründeki yerel asset CSS'leri */
+@import url('/assets/vendors/material-icons/material-icons.css');
+@import url('/assets/vendors/mono-social-icons/monosocialiconsfont.css');
+@import url('/assets/vendors/feather-icons/feather.css');
+@import url('/assets/css/style.css');

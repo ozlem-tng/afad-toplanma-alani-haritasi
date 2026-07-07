@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore;
 using backend.Data;
+using System.Net.Quic;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,13 +21,19 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
+ 
 
 var app = builder.Build();
+
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(); 
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
+        c.RoutePrefix = string.Empty; 
+    });
 }
 
 app.UseHttpsRedirection();
