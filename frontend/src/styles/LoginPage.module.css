@@ -1,0 +1,36 @@
+@reference "tailwindcss";
+
+/* ANA KONTEYNER - Grid sistemi */
+.container {
+    @apply min-h-screen w-full grid bg-white;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+    .container {
+        grid-template-columns: 9fr 3fr;
+        /* Sol 9, Sağ 3 */
+    }
+}
+
+/* SOL TARAF */
+.leftPanel {
+    @apply h-screen w-full flex flex-col justify-center items-center px-8 py-6 bg-gradient-to-br from-white via-slate-50 to-blue-50/30 relative;
+    overflow-y: auto;
+}
+
+.watermark {
+    @apply absolute left-10 bottom-10 text-[180px] font-black text-[#0a3675]/[0.03] select-none pointer-events-none leading-none;
+}
+
+.formWrapper {
+    @apply w-full max-w-2xl mx-auto relative z-10;
+}
+
+.footerLinks {
+    @apply flex items-center justify-center gap-6 text-xs text-slate-400 font-bold w-full pt-4 mt-4 flex-wrap border-t border-slate-200/40;
+}
+
+.footerLink {
+    @apply hover:text-[#0a3675] transition-colors flex items-center gap-1;
+}

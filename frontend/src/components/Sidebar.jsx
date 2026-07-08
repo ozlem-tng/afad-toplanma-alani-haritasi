@@ -1,0 +1,84 @@
+import { Shield, Building, Users, AlertTriangle, Clock, Calendar, Bell } from "lucide-react";
+import styles from "../styles/Sidebar.module.css";
+
+export default function Sidebar({ currentTime }) {
+    const statsItems = [
+        { icon: Building, value: "247", label: "Toplanma Alanı" },
+        { icon: Users, value: "15.2K", label: "Kullanıcı" },
+        { icon: AlertTriangle, value: "4", label: "Aktif Alarm" },
+        { icon: Clock, value: "7/24", label: "Hizmet" },
+    ];
+
+    return (
+        <div className={styles.sidebar}>
+            <div className={styles.bgPattern} />
+            <div className={styles.glowTop} />
+            <div className={styles.glowBottom} />
+
+            <div className={styles.watermark}>AFAD</div>
+
+            <div className={styles.content}>
+                {/* TARİH / SAAT */}
+                <div className={styles.header}>
+                    <div className={styles.date}>
+                        <Calendar size={15} />
+                        <span>{currentTime.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}</span>
+                    </div>
+                    <div className={styles.time}>
+                        <Clock size={15} />
+                        <span>{currentTime.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</span>
+                    </div>
+                </div>
+
+                {/* LOGO / SLOGAN */}
+                <div className={styles.logoSection}>
+                    <div className={styles.logoWrapper}>
+                        <div className={styles.logoBox}>
+                            <div className={styles.logoInner}>
+                                <Shield className={styles.logoIcon} />
+                            </div>
+                        </div>
+                        <div className={styles.statusBadge}>
+                            <div className={styles.statusDot} />
+                        </div>
+                    </div>
+                    <h2 className={styles.logoText}>AFAD</h2>
+                    <p className={styles.logoSub}>Afet Yönetim Sistemi</p>
+                    <p className={styles.slogan}>Afet anında hızlı karar, güvenli koordinasyon ve kesintisiz yönetim.</p>
+                </div>
+
+                {/* İSTATİSTİKLER */}
+                <div className={styles.statsGrid}>
+                    {statsItems.map((item, index) => (
+                        <div key={index} className={styles.statCard}>
+                            <item.icon className={styles.statIcon} />
+                            <p className={styles.statValue}>{item.value}</p>
+                            <p className={styles.statLabel}>{item.label}</p>
+                        </div>
+                    ))}
+                </div>
+
+                {/* DUYURULAR */}
+                <div className={styles.announcements}>
+                    <div className={styles.announceHeader}>
+                        <div className={styles.announceTitle}>
+                            <Bell size={14} className={styles.bellIcon} />
+                            <span>Duyurular</span>
+                        </div>
+                        <span className={styles.announceBadge}>3 yeni</span>
+                    </div>
+                    <div className={styles.announceList}>
+                        <div className={styles.announceItem}>
+                            <div className={styles.bullet} />
+                            <span>Yeni tahliye planı eklendi</span>
+                        </div>
+                        <div className={styles.announceItem}>
+                            <div className={styles.bullet} />
+                            <span>Meteoroloji turuncu uyarı</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

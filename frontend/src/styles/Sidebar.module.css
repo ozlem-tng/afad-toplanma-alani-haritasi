@@ -1,0 +1,160 @@
+@reference "tailwindcss";
+
+/* SIDEBAR - SAĞ TARAF */
+.sidebar {
+    @apply hidden h-screen relative overflow-hidden flex-col justify-between;
+    background: radial-gradient(ellipse at 30% 20%, #4a8bc2 0%, #1a497a 42%, #0a2a5a 72%, #061b3d 100%);
+}
+
+@media (min-width: 1024px) {
+    .sidebar {
+        @apply flex;
+    }
+}
+
+.bgPattern {
+    @apply absolute inset-0 opacity-20;
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDQwIDQwIj48cGF0aCBkPSJNMzAgMTBhMTAgMTAgMCAwIDEtMTAgMTAgMTAgMTAgMCAwIDEtMTAtMTAgMTAgMTAgMCAwIDEgMTAtMTB6IiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIuMDMiLz48L3N2Zz4=");
+}
+
+.glowTop {
+    @apply absolute top-0 -right-20 w-[330px] h-[330px] bg-blue-400/20 rounded-full blur-3xl animate-pulse;
+}
+
+.glowBottom {
+    @apply absolute bottom-0 -left-20 w-[330px] h-[330px] bg-blue-300/20 rounded-full blur-3xl;
+}
+
+.watermark {
+    @apply absolute left-10 bottom-10 text-[180px] font-black text-white/[0.04] select-none pointer-events-none leading-none;
+}
+
+.content {
+    @apply relative z-10 w-full h-full flex flex-col justify-between px-5 py-6;
+}
+
+.header {
+    @apply flex items-center justify-between;
+}
+
+.date {
+    @apply flex items-center gap-2 text-white/70 text-xs font-bold;
+}
+
+.time {
+    @apply flex items-center gap-2 text-white/90 text-base font-black;
+}
+
+.logoSection {
+    @apply flex flex-col items-center;
+}
+
+.logoWrapper {
+    @apply relative;
+}
+
+.logoBox {
+    @apply w-24 h-24 rounded-3xl bg-white/20 backdrop-blur-2xl border border-white/30 flex items-center justify-center mb-4;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.logoInner {
+    @apply w-16 h-16 rounded-2xl bg-[#0a3675]/90 flex items-center justify-center;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+.logoIcon {
+    @apply w-10 h-10 text-white;
+}
+
+.statusBadge {
+    @apply absolute -top-2 -right-2 w-6 h-6 rounded-full bg-emerald-400/30 backdrop-blur-sm border border-emerald-400/40 flex items-center justify-center;
+}
+
+.statusDot {
+    @apply w-2 h-2 rounded-full bg-emerald-400 animate-pulse;
+}
+
+.logoText {
+    @apply text-4xl font-black text-white tracking-tight;
+    text-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+.logoSub {
+    @apply text-white/60 text-xs font-bold tracking-[0.2em] uppercase mt-1;
+}
+
+.slogan {
+    @apply mt-4 text-center text-white/70 text-sm font-semibold max-w-xs;
+}
+
+.statsGrid {
+    @apply grid grid-cols-2 gap-3;
+}
+
+.statCard {
+    @apply bg-white/10 backdrop-blur-xl rounded-2xl p-4 text-center border border-white/20 transition-all duration-300 cursor-pointer;
+}
+
+.statCard:hover {
+    @apply bg-white/20;
+    transform: scale(1.05);
+    box-shadow: 0 25px 50px -12px rgba(255, 255, 255, 0.1);
+}
+
+.statIcon {
+    @apply w-6 h-6 text-white/80 mx-auto mb-1.5 transition-all duration-300;
+}
+
+.statCard:hover .statIcon {
+    @apply text-white;
+    transform: scale(1.1);
+}
+
+.statValue {
+    @apply text-2xl font-black text-white;
+}
+
+.statLabel {
+    @apply text-[10px] font-bold text-white/60 uppercase tracking-wider transition-colors duration-300;
+}
+
+.statCard:hover .statLabel {
+    @apply text-white/80;
+}
+
+.announcements {
+    @apply bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 transition-all;
+}
+
+.announcements:hover {
+    @apply bg-white/15;
+}
+
+.announceHeader {
+    @apply flex items-center justify-between;
+}
+
+.announceTitle {
+    @apply flex items-center gap-2 text-white/70 text-xs font-bold;
+}
+
+.bellIcon {
+    @apply text-yellow-400;
+}
+
+.announceBadge {
+    @apply text-white/40 text-[10px];
+}
+
+.announceList {
+    @apply mt-2 space-y-1.5;
+}
+
+.announceItem {
+    @apply flex items-start gap-2 text-white/80 text-xs;
+}
+
+.bullet {
+    @apply w-1 h-1 rounded-full bg-white/40 mt-1.5 flex-shrink-0;
+}

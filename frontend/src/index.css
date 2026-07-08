@@ -1,9 +1,25 @@
-/* Harici Fontlar ve CDN CSS'leri */
-@import url('https://fonts.googleapis.com/css?family=Montserrat:200,300,400,500,600|Roboto:400');
-@import url('https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.7.0/css/perfect-scrollbar.min.css');
+@import "tailwindcss";
 
-/* Public klasöründeki yerel asset CSS'leri */
-@import url('/assets/vendors/material-icons/material-icons.css');
-@import url('/assets/vendors/mono-social-icons/monosocialiconsfont.css');
-@import url('/assets/vendors/feather-icons/feather.css');
-@import url('/assets/css/style.css');
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0px) translateX(0px);
+    }
+
+    25% {
+        transform: translateY(-30px) translateX(10px);
+    }
+
+    50% {
+        transform: translateY(0px) translateX(-10px);
+    }
+
+    75% {
+        transform: translateY(30px) translateX(10px);
+    }
+}
+
+.animate-float {
+    animation: float linear infinite;
+}
