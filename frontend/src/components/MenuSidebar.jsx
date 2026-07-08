@@ -1,24 +1,22 @@
-import HomeIcon from '@mui/icons-material/Home';
-import PlaceIcon from '@mui/icons-material/Place';
-import LayersIcon from '@mui/icons-material/Layers';
-import AnalyticsIcon from '@mui/icons-material/Analytics';
-import SettingsIcon from '@mui/icons-material/Settings';
+import PlaceIcon from "@mui/icons-material/Place";
+import LayersIcon from "@mui/icons-material/Layers";
+import AnalyticsIcon from "@mui/icons-material/Analytics";
 import InfoIcon from "@mui/icons-material/Info";
 
-function Sidebar({ open }) {
+function MenuSidebar({ open }) {
   return (
     <div
       style={{
-        position: 'absolute',
-        top: 85,
-        left: open ? 20 : -270,
-        width: 250,
-        background: '#fff',
-        borderRadius: 12,
-        boxShadow: '0 8px 20px rgba(0,0,0,.2)',
-        transition: '.3s',
+        position: "absolute",
+        top: 94,
+        left: open ? 24 : -280,
+        width: 260,
+        background: "#fff",
+        borderRadius: 16,
+        boxShadow: "0 10px 30px rgba(10,54,117,.12)",
+        transition: "all .3s ease",
         zIndex: 1000,
-        overflow: 'hidden',
+        overflow: "hidden",
       }}
     >
       <MenuItem icon={<PlaceIcon />} text="Toplanma Alanları" />
@@ -33,18 +31,29 @@ function MenuItem({ icon, text }) {
   return (
     <div
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 15,
-        padding: '16px 20px',
-        cursor: 'pointer',
-        borderBottom: '1px solid #eee',
+        display: "flex",
+        alignItems: "center",
+        gap: 16,
+        padding: "18px 22px",
+        cursor: "pointer",
+        borderBottom: "1px solid #edf2f7",
+        color: "#374151",
+        fontWeight: 500,
+        transition: "all .2s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "#f8fafc";
+        e.currentTarget.style.color = "#0a3675";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "#fff";
+        e.currentTarget.style.color = "#374151";
       }}
     >
-      {icon}
+      <span style={{ color: "#0a3675" }}>{icon}</span>
       <span>{text}</span>
     </div>
   );
 }
 
-export default Sidebar;
+export default MenuSidebar;

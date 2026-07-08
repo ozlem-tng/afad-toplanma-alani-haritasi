@@ -5,22 +5,38 @@ function FilterButton() {
     <button
       style={{
         position: "absolute",
-        top: 20,
-        right: 20,
+        top: 24,
+        right: 24,
         zIndex: 1000,
-        height: 54,
+
+        height: 56,
         padding: "0 22px",
-        borderRadius: 12,
+
         border: "none",
-        background: "#d32f2f",
+        borderRadius: 16,
+
+        background: "#0a3675",
         color: "#fff",
+
         display: "flex",
         alignItems: "center",
         gap: 8,
-        fontSize: 15,
-        fontWeight: 600,
+
+        fontSize: 14,
+        fontWeight: 700,
+
         cursor: "pointer",
-        boxShadow: "0 4px 12px rgba(0,0,0,.15)",
+
+        boxShadow: "0 10px 30px rgba(10,54,117,.12)",
+        transition: "all .25s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "#12448f";
+        e.currentTarget.style.transform = "translateY(-2px)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "#0a3675";
+        e.currentTarget.style.transform = "translateY(0)";
       }}
     >
       <FilterAltIcon />

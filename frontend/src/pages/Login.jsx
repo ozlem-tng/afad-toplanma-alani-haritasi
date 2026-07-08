@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Activity } from "lucide-react";
-import Sidebar from "./Sidebar";
-import AuthCard from "./AuthCard";
+import Sidebar from "../components/Sidebar";
+import AuthCard from "../components/AuthCard";
 import { authService } from "../api/auth";
-import styles from "../styles/LoginPage.module.css";
+import styles from "../styles/Login.module.css";
 
 export default function LoginPage() {
     const [tab, setTab] = useState("giris");

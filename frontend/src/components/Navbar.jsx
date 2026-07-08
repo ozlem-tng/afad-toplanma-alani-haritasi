@@ -1,5 +1,5 @@
-import './Navbar.css';
-import logo from '../assets/logo.png';
+import "../styles/Navbar.css";
+import logo from "../assets/logo.png";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 
 function Navbar({ onNavigate }) {
@@ -7,18 +7,20 @@ function Navbar({ onNavigate }) {
     <nav className="navbar">
       <div className="logo-container">
         <img src={logo} alt="AFAD Logo" className="logo" />
-        <h2>
-          <span>AFAD</span> Afet Toplanma Alanları
-        </h2>
+
+        <div className="logo-text">
+          <h2>AFAD</h2>
+          <p>Afet Toplanma Alanları</p>
+        </div>
       </div>
 
-     <button
-  className="admin-btn"
-  onClick={() => onNavigate("login")}
->
-  <AdminPanelSettingsIcon style={{ fontSize: 20 }} />
-  <span>Yönetici</span>
-</button>
+      <button
+        className="admin-btn"
+        onClick={() => onNavigate("login")}
+      >
+        <AdminPanelSettingsIcon fontSize="small" />
+        Yönetici Girişi
+      </button>
     </nav>
   );
 }
