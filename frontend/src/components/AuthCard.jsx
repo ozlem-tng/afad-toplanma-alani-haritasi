@@ -7,7 +7,8 @@ export default function AuthCard({
     showRequestPass, setShowRequestPass,
     capsLock, setCapsLock,
     onLogin,
-    onRegister
+    onRegister,
+    onChangePassword // Added prop for redirection to the Update Password page
 }) {
     return (
         <div className={styles.card}>
@@ -53,7 +54,17 @@ export default function AuthCard({
                         <div>
                             <div className={styles.headerRight}>
                                 <label className={styles.label}>ŞİFRE</label>
-                                <a href="#" className={styles.forgotPassword}>Şifremi Unuttum?</a>
+                                {/* Added onClick event handler to trigger the navigation function */}
+                                <a 
+                                    href="#" 
+                                    className={styles.forgotPassword}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        if (onChangePassword) onChangePassword();
+                                    }}
+                                >
+                                    Şifremi Unuttum?
+                                </a>
                             </div>
                             <div className={styles.inputWrapper}>
                                 <Lock className={styles.inputIcon} />

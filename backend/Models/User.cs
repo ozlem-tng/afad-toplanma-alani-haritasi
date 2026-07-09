@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Net.Http.Headers;
+
 namespace backend.Models;
 public class User
 {
@@ -7,4 +10,9 @@ public class User
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; }
+
+    public string? VerificationToken { get; set;}
+    public DateTime? TokenExpiresAt {get; set; }
+    public bool IsVerified { get; set; } = false;
+
 }
