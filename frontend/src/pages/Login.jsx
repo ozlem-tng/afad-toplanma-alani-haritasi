@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Yönlendirme için şart
+import { useNavigate } from "react-router-dom"; 
 import Sidebar from "../components/Sidebar";
 import AuthCard from "../components/AuthCard"; 
 import { authService } from "../api/auth";
@@ -11,40 +11,82 @@ export default function LoginPage() {
     const [showRequestPass, setShowRequestPass] = useState(false);
     const [capsLock, setCapsLock] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
+
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
+    
     const navigate = useNavigate(); 
+
+    useEffect(() => {
+        setError("");
+        setSuccess("");
+    }, [tab]);
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
     }, []);
 
+    const validatePassword = (password) => {
+        if (password.length < 8) {
+            return "Şifre en az 8 karakter uzunluğunda olmalıdır.";
+        }
+        if (!/[A-Z]/.test(password)) {
+            return "Şifre en az bir büyük harf içermelidir.";
+        }
+        if (!/\d/.test(password)) {
+            return "Şifre en az bir rakam içermelidir.";
+        }
+        if (!/[^a-zA-Z0-9]/.test(password)) {
+            return "Şifre en az bir özel karakter içermelidir.";
+        }
+        return null;
+    };
+
     const handleLogin = async (e) => {
         e.preventDefault();
+        setError("");
+        setSuccess("");
+        
         const email = e.target.email.value;
         const password = e.target.password.value;
+        
         try {
             const data = await authService.login(email, password);
             localStorage.setItem('token', data.token);
-            alert('Giriş başarılı!');
+            setSuccess("Giriş başarılı! Yönlendiriliyorsunuz...");
         } catch (error) {
-            alert('Giriş başarısız: ' + (error.response?.data?.message || error.message));
+            setError(error.response?.data?.message || "Giriş başarısız.");
         }
     };
 
     const handleRegister = async (e) => {
         e.preventDefault();
+        setError("");
+        setSuccess("");
+
         const email = e.target.email.value;
         const password = e.target.password.value;
+
+        const validationError = validatePassword(password);
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+
         try {
             const data = await authService.register(email, password);
-            alert('Kayıt başarılı! Giriş yapabilirsiniz.');
-            setTab('giris');
+            setSuccess("Kaydınız başarıyla gerçekleştirilmiştir! Giriş sayfasına yönlendiriliyorsunuz...");
+            
+            setTimeout(() => {
+                setTab('giris');
+                setSuccess("");
+            }, 2500);
         } catch (error) {
-            alert('Kayıt başarısız: ' + (error.response?.data?.message || error.message));
+            setError(error.response?.data?.message || "Kayıt başarısız.");
         }
     };
 
-    // Yönlendirme Fonksiyonu
     const handleRedirectToUpdatePassword = () => {
         navigate('/update-password');
     };
@@ -66,11 +108,12 @@ export default function LoginPage() {
                         setCapsLock={setCapsLock}
                         onLogin={handleLogin}
                         onRegister={handleRegister}
-                        onChangePassword={handleRedirectToUpdatePassword} // Kart içindeki butona tıklandığında çalışır
+                        onChangePassword={handleRedirectToUpdatePassword}
+                        error={error}
+                        success={success}
                     />
 
                     <div className={styles.footerLinks}>
-                        {/* En alttaki yedek link tıklandığında da çalışır */}
                         <a 
                             href="#" 
                             className={styles.footerLink} 

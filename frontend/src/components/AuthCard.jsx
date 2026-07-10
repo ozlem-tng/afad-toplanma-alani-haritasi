@@ -8,7 +8,9 @@ export default function AuthCard({
     capsLock, setCapsLock,
     onLogin,
     onRegister,
-    onChangePassword // Added prop for redirection to the Update Password page
+    onChangePassword,
+    error,
+    success
 }) {
     return (
         <div className={styles.card}>
@@ -39,6 +41,18 @@ export default function AuthCard({
                 </button>
             </div>
 
+            {/* Visual inline alert message boxes placed directly inside the card wrapper */}
+            {error && (
+                <div style={{ color: "#ef4444", fontSize: "14px", margin: "12px 0 0 0", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <AlertCircle size={16} /> {error}
+                </div>
+            )}
+            {success && (
+                <div style={{ color: "#10b981", fontSize: "14px", margin: "12px 0 0 0", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <AlertCircle size={16} /> {success}
+                </div>
+            )}
+
             {tab === "giris" && (
                 <>
                     <h1 className={styles.title}>Yönetici Girişi</h1>
@@ -54,7 +68,6 @@ export default function AuthCard({
                         <div>
                             <div className={styles.headerRight}>
                                 <label className={styles.label}>ŞİFRE</label>
-                                {/* Added onClick event handler to trigger the navigation function */}
                                 <a 
                                     href="#" 
                                     className={styles.forgotPassword}

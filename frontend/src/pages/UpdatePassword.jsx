@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, AlertCircle, ArrowLeft, Shield } from "lucide-react";
 import Sidebar from "../components/Sidebar"; 
 import { authService } from "../api/auth";
-import loginStyles from "../styles/Login.module.css";    // Page grid container styles
-import cardStyles from "../styles/AuthCard.module.css";  // Specific login-card panel dimensions
+import loginStyles from "../styles/Login.module.css";    
+import cardStyles from "../styles/AuthCard.module.css";  
 
 export default function UpdatePassword() {
     const [showPass, setShowPass] = useState(false);
@@ -33,6 +33,23 @@ export default function UpdatePassword() {
             return;
         }
 
+        if (newPassword.length < 8) {
+            setError("Şifre en az 8 karakter uzunluğunda olmalıdır.");
+            return;
+        }
+        if (!/[A-Z]/.test(newPassword)) {
+            setError("Şifre en az bir büyük harf içermelidir.");
+            return;
+        }
+        if (!/\d/.test(newPassword)) {
+            setError("Şifre en az bir rakam içermelidir.");
+            return;
+        }
+        if (!/[^a-zA-Z0-9]/.test(newPassword)) {
+            setError("Şifre en az bir özel karakter (sembol) içermelidir.");
+            return;
+        }
+
         try {
             setLoading(true);
             await authService.changePassword(email, newPassword);
@@ -54,7 +71,6 @@ export default function UpdatePassword() {
                 <div className={loginStyles.watermark}>AFAD</div>
                 <div className={loginStyles.formWrapper}>
                     
-                    {/* Reusing cardStyles instead of loginStyles forces the card to match login width constraints */}
                     <div className={cardStyles.card}>
                         <div className={cardStyles.logo}>
                             <div className={cardStyles.logoIcon}>
@@ -66,7 +82,6 @@ export default function UpdatePassword() {
                             </div>
                         </div>
 
-                        {/* Title block formatted identically to your "Yönetici Girişi" */}
                         <h1 className={cardStyles.title} style={{ marginTop: "24px" }}>Şifre Güncelle</h1>
                         <p className={cardStyles.subtitle}>Ankara Afet Yönetim Sistemi</p>
 
@@ -128,7 +143,6 @@ export default function UpdatePassword() {
                         </p>
                     </div>
 
-                    {/* Lower branding links */}
                     <div className={loginStyles.footerLinks}>
                         <a href="#" className={loginStyles.footerLink} onClick={(e) => { e.preventDefault(); navigate("/login"); }}>Giriş Yap</a>
                         <span>•</span>
