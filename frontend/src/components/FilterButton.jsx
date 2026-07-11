@@ -1,22 +1,26 @@
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import { COLORS } from '../styles/colors';
+import Badge from '@mui/material/Badge';
 
-function FilterButton({ open, onToggle }) {
+function FilterButton({ open, activeCount = 0, onClick }) {
   return (
     <button
-      onClick={onToggle}
+      type="button"
+      onClick={onClick}
+      aria-label="Filtreleri aç veya kapat"
+      aria-expanded={open}
       style={{
         position: 'absolute',
         top: 24,
         right: 24,
         zIndex: 1000,
-
         height: 56,
         padding: '0 22px',
 
         border: 'none',
         borderRadius: 16,
 
-        background: '#0a3675',
+        background: COLORS.primary,
         color: '#fff',
 
         display: 'flex',
@@ -31,17 +35,25 @@ function FilterButton({ open, onToggle }) {
         boxShadow: '0 10px 30px rgba(10,54,117,.12)',
         transition: 'all .25s ease',
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = '#12448f';
-        e.currentTarget.style.transform = 'translateY(-2px)';
+      onMouseEnter={(event) => {
+        event.currentTarget.style.background = COLORS.primaryHover;
+        event.currentTarget.style.transform = 'translateY(-2px)';
       }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = '#0a3675';
-        e.currentTarget.style.transform = 'translateY(0)';
+      onMouseLeave={(event) => {
+        event.currentTarget.style.background = COLORS.primary;
+        event.currentTarget.style.transform = 'translateY(0)';
       }}
     >
       <FilterAltIcon />
-      Filtreler
+      <Badge
+        badgeContent={activeCount}
+        color="error"
+        invisible={activeCount === 0}
+      >
+        <FilterAltIcon />
+      </Badge>
+
+      <span>Filtreler</span>
     </button>
   );
 }

@@ -1,3 +1,5 @@
+import { COLORS } from "../styles/colors";
+
 function FilterPanel({ open, areas, filters, setFilters, onApply, onClear }) {
   const districts = [...new Set(areas.map((area) => area.district))].sort(
     (a, b) => a.localeCompare(b, 'tr'),
@@ -52,7 +54,7 @@ function FilterPanel({ open, areas, filters, setFilters, onApply, onClear }) {
         top: 92,
         right: 24,
         width: 340,
-        background: '#fff',
+        background: COLORS.white,
         borderRadius: 18,
         padding: 24,
         boxShadow: '0 10px 30px rgba(0,0,0,.15)',
@@ -132,9 +134,9 @@ function FilterPanel({ open, areas, filters, setFilters, onApply, onClear }) {
             flex: 1,
             height: 44,
             borderRadius: 10,
-            border: '1px solid #0a3675',
+            border:`1px solid ${COLORS.primary}`,
             background: '#fff',
-            color: '#0a3675',
+            color: COLORS.primary,
             fontWeight: 600,
             cursor: 'pointer',
           }}
@@ -149,7 +151,8 @@ function FilterPanel({ open, areas, filters, setFilters, onApply, onClear }) {
             height: 44,
             borderRadius: 10,
             border: 'none',
-            background: '#0a3675',
+            background: COLORS.primary,
+            hover:"#2E4368",
             color: '#fff',
             fontWeight: 600,
             cursor: 'pointer',

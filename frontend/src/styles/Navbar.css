@@ -1,17 +1,15 @@
 .navbar {
   height: 76px;
-  background: #ffffff;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 32px;
-  box-shadow: 0 8px 25px rgba(10, 54, 117, 0.08);
-  border-bottom: 1px solid rgba(10, 54, 117, 0.08);
+  background: #ffffff;
+  border-bottom: 1px solid #d9e1eb;
+  box-shadow: 0 8px 25px rgba(36, 53, 83, 0.08);
   position: relative;
   z-index: 1000;
 }
-
-/* Logo */
 
 .logo-container {
   display: flex;
@@ -20,11 +18,15 @@
 }
 
 .logo {
-  width: 52px;
-  height: 52px;
+  width: 68px;
+  height: 68px;
   object-fit: contain;
+  background: #fff;
+  padding: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(36, 53, 83, 0.08);
 }
-
 .logo-text {
   display: flex;
   flex-direction: column;
@@ -32,7 +34,7 @@
 
 .logo-text h2 {
   margin: 0;
-  color: #0a3675;
+  color: #243553;
   font-size: 26px;
   font-weight: 800;
   line-height: 1;
@@ -41,40 +43,31 @@
 
 .logo-text p {
   margin: 4px 0 0;
-  color: #6b7280;
+  color: #64748b;
   font-size: 13px;
   font-weight: 500;
 }
-
-/* Buton */
 
 .admin-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-
-  background: #0a3675;
-  color: white;
-
+  padding: 11px 20px;
   border: none;
   border-radius: 12px;
-
-  padding: 11px 20px;
-
+  background: #243553;
+  color: #ffffff;
   font-size: 14px;
   font-weight: 700;
-
   cursor: pointer;
-
   transition: all .25s ease;
-
-  box-shadow: 0 8px 18px rgba(10, 54, 117, .18);
+  box-shadow: 0 8px 18px rgba(36, 53, 83, .18);
 }
 
 .admin-btn:hover {
-  background: #12448f;
+  background: #2f466d;
   transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(10, 54, 117, .24);
+  box-shadow: 0 12px 24px rgba(36, 53, 83, .24);
 }
 
 .admin-btn:active {

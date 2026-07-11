@@ -8,6 +8,7 @@ import areas from '../mock/ankaraAreas_realistic_mock.json';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FilterPanel from '../components/FilterPanel';
+import AreaCount from '../components/AreaCount';
 
 function Home() {
   const [searchText, setSearchText] = useState('');
@@ -18,11 +19,13 @@ function Home() {
     type: '',
     capacity: '',
   };
-
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [filters, setFilters] = useState(emptyFilters);
   const [tempFilters, setTempFilters] = useState(emptyFilters);
   const [filterOpen, setFilterOpen] = useState(false);
-
+  const activeFilterCount = Object.values(filters).filter(
+    (value) => value !== '',
+  ).length;
   const navigate = useNavigate();
 
   const filteredAreas = areas.filter((area) => {
@@ -59,6 +62,9 @@ function Home() {
       matchesCapacity
     );
   });
+  const activeAreaCount = filteredAreas.filter(
+    (area) => area.availability === 'available',
+  ).length;
 
   return (
     <>
@@ -70,19 +76,20 @@ function Home() {
           selectedArea={selectedArea}
           onSelectArea={setSelectedArea}
         />
+        <AreaCount count={activeAreaCount} />
         <SearchBar
           searchText={searchText}
           setSearchText={setSearchText}
           filteredAreas={filteredAreas}
           onSelectArea={setSelectedArea}
+          showSuggestions={showSuggestions}
+          setShowSuggestions={setShowSuggestions}
         />
+
         <FilterButton
           open={filterOpen}
-          onToggle={() => setFilterOpen(!filterOpen)}
-        />
-        <FilterButton
-          open={filterOpen}
-          onToggle={() => setFilterOpen(!filterOpen)}
+          activeCount={activeFilterCount}
+          onClick={() => setFilterOpen(!filterOpen)}
         />
 
         <FilterPanel
