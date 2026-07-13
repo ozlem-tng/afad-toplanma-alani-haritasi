@@ -21,10 +21,8 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
- 
 
 var app = builder.Build();
-
 
 if (app.Environment.IsDevelopment())
 {
@@ -32,7 +30,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
-        c.RoutePrefix = string.Empty; 
+        // Removed/Commented out RoutePrefix to keep Swagger at /swagger instead of the root URL
+        // c.RoutePrefix = string.Empty; 
     });
 }
 

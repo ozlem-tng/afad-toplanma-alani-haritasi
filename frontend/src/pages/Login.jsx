@@ -56,36 +56,45 @@ export default function LoginPage() {
             localStorage.setItem('token', data.token);
             setSuccess("Giriş başarılı! Yönlendiriliyorsunuz...");
         } catch (error) {
-            setError(error.response?.data?.message || "Giriş başarısız.");
+            if (error.response?.status == 423){
+                setError(error.response.data.message);
+            }else{
+                setError(error.response?.data?.message || "Giriş başarısız.");
+            }
         }
     };
 
     const handleRegister = async (e) => {
-        e.preventDefault();
-        setError("");
-        setSuccess("");
+    e.preventDefault();
+    setError("");
+    setSuccess("");
 
-        const email = e.target.email.value;
-        const password = e.target.password.value;
+    // 1. Capture ALL form values using the name attributes from AuthCard
+    const name = e.target.name.value;
+    const registrationNumber = e.target.registrationNumber.value;
+    const email = e.target.email.value;
+    const password = e.target.password.value;
 
-        const validationError = validatePassword(password);
-        if (validationError) {
-            setError(validationError);
-            return;
-        }
+    // Validate the password layout local rules
+    const validationError = validatePassword(password);
+    if (validationError) {
+        setError(validationError);
+        return;
+    }
 
-        try {
-            const data = await authService.register(email, password);
-            setSuccess("Kaydınız başarıyla gerçekleştirilmiştir! Giriş sayfasına yönlendiriliyorsunuz...");
-            
-            setTimeout(() => {
-                setTab('giris');
-                setSuccess("");
-            }, 2500);
-        } catch (error) {
-            setError(error.response?.data?.message || "Kayıt başarısız.");
-        }
-    };
+    try {
+        // 2. Pass all required properties to the authentication service method
+        const data = await authService.register(name, email, password, registrationNumber);
+        setSuccess("Kaydınız başarıyla gerçekleştirilmiştir! Giriş sayfasına yönlendiriliyorsunuz...");
+        
+        setTimeout(() => {
+            setTab('giris');
+            setSuccess("");
+        }, 2500);
+    } catch (error) {
+        setError(error.response?.data?.message || "Kayıt başarısız.");
+    }
+};
 
     const handleRedirectToUpdatePassword = () => {
         navigate('/update-password');

@@ -111,10 +111,17 @@ export default function AuthCard({
                     <p className={styles.subtitle}>Yönetici hesabı oluşturmak için bilgilerinizi girin</p>
                     <form className={styles.registerForm} onSubmit={onRegister}>
                         <div>
-                            <label className={styles.registerLabel}>AD SOYAD</label>
+                            <label className={styles.registerLabel}>ŞUBE ADI</label>
                             <div className={styles.inputWrapper}>
                                 <User className={styles.registerIcon} />
-                                <input type="text" name="name" placeholder="Ahmet Yılmaz" className={styles.registerInput} />
+                                <input type="text" name="name" placeholder="AFAD" className={styles.registerInput} />
+                            </div>
+                        </div>
+                        <div>
+                            <label className={styles.registerLabel}>SİCİL NUMARASI</label>
+                            <div className={styles.inputWrapper}>
+                                <FileKey2 className={styles.registerIcon} />
+                                <input type="text" name="registrationNumber" placeholder="123456" className={styles.registerInput} />
                             </div>
                         </div>
                         <div>

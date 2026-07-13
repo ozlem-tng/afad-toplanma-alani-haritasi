@@ -1,9 +1,9 @@
 import api from './index';
-x
+
 
 export const authService = {
-    register: async (email, password) => {
-        const response = await api.post('/User/register', { email, password });
+    register: async (name, email, password, registrationNumber) => {
+        const response = await api.post('/User/register', { name, email, password, registrationNumber });
         return response.data;
     },
     login: async (email, password) => {
@@ -17,10 +17,4 @@ export const authService = {
         });
         return response.data;
     },
-    requestEntryVerification: async (email) => {
-        const response = await api.post('/User/request-entry-verification', JSON.stringify(email), {
-            headers: { 'Content-Type': 'application/json' }
-        });
-        return response.data;
-    }
 };
