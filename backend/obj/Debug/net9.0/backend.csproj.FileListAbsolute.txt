@@ -245,3 +245,6 @@ C:\Users\Baha JARAD\Desktop\afad-toplanma-alani-haritasi\backend\obj\Debug\net9.
 C:\Users\Baha JARAD\Desktop\afad-toplanma-alani-haritasi\backend\obj\Debug\net9.0\backend.pdb
 C:\Users\Baha JARAD\Desktop\afad-toplanma-alani-haritasi\backend\obj\Debug\net9.0\backend.genruntimeconfig.cache
 C:\Users\Baha JARAD\Desktop\afad-toplanma-alani-haritasi\backend\obj\Debug\net9.0\ref\backend.dll
+C:\Users\Baha JARAD\Desktop\afad-toplanma-alani-haritasi\backend\bin\Debug\net9.0\BouncyCastle.Cryptography.dll
+C:\Users\Baha JARAD\Desktop\afad-toplanma-alani-haritasi\backend\bin\Debug\net9.0\MailKit.dll
+C:\Users\Baha JARAD\Desktop\afad-toplanma-alani-haritasi\backend\bin\Debug\net9.0\MimeKit.dll

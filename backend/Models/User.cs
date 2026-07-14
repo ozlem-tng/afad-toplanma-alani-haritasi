@@ -15,4 +15,7 @@ public class User
 
     public int FailedAttemptCount { get; set; } = 0;
     public DateTime? LockoutEnd { get; set; }
+
+    public string? LoginVerificationCode { get; set; }
+    public DateTime? LoginVerificationCodeExpiresAt { get; set; }
 }

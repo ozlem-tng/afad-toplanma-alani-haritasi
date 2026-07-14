@@ -1,13 +1,14 @@
 using Microsoft.EntityFrameworkCore;
-using Swashbuckle.AspNetCore;
 using backend.Data;
-using System.Net.Quic;
+using backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseInMemoryDatabase("XYDataDb"));
@@ -30,8 +31,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
-        // Removed/Commented out RoutePrefix to keep Swagger at /swagger instead of the root URL
-        // c.RoutePrefix = string.Empty; 
     });
 }
 
