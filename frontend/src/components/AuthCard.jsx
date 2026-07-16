@@ -1,5 +1,7 @@
 import { Mail, Lock, Eye, EyeOff, User, AlertCircle, FileKey2, Shield, KeyRound } from "lucide-react";
 import styles from "../styles/AuthCard.module.css";
+// Updated to import Logo2.png from your assets
+import logo2 from "../assets/Logo2.png"; 
 
 export default function AuthCard({
     tab, setTab,
@@ -17,14 +19,20 @@ export default function AuthCard({
 }) {
     return (
         <div className={styles.card}>
-            <div className={styles.logo}>
-                <div className={styles.logoIcon}>
-                    <Shield className={styles.logoIconInner} />
-                </div>
-                <div>
-                    <span className={styles.logoTitle}>AFAD</span>
-                    <p className={styles.logoSubtitle}>Yönetici Paneli</p>
-                </div>
+            {/* Logo container updated to perfectly center a standalone, larger logo layout */}
+            <div className={styles.logo} style={{ display: "flex", justifyContent: "center", width: "100%", margin: "0 0 10px 0" }}>
+                <img 
+                    src={logo2} 
+                    alt="ATİS Logo" 
+                    style={{ 
+                        height: "75px", 
+                        width: "auto", 
+                        objectFit: "contain",
+                        borderRadius: "12px",
+                        backgroundColor: "#ffffff",
+                        padding: "4px"
+                    }} 
+                />
             </div>
 
             {/* Hide tab options during a 2FA verification request to prevent UI fragmentation */}
@@ -79,7 +87,7 @@ export default function AuthCard({
                             </div>
                         </div>
                         <button type="submit" className={styles.submitButton}>
-                            <Shield size={20} className={styles.submitIcon} /> KODU VERİFİYE ET
+                            <Shield size={20} className={styles.submitIcon} /> KODU DOĞRULA 
                         </button>
                         <button 
                             type="button" 
@@ -97,7 +105,10 @@ export default function AuthCard({
             {tab === "giris" && !isTwoFactorStep && (
                 <>
                     <h1 className={styles.title}>Yönetici Girişi</h1>
-                    <p className={styles.subtitle}>Ankara Afet Yönetim Sistemi</p>
+                    {/* Subtitle text is now explicitly centered inline */}
+                    <p className={styles.subtitle} style={{ textAlign: "center" }}>
+                        Afet Toplanma Alanı İşaretleme Sistemi
+                    </p>
                     <form className={styles.form} onSubmit={onLogin}>
                         <div>
                             <label className={styles.label}>E-POSTA</label>

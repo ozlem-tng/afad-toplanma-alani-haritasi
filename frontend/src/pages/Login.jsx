@@ -31,9 +31,11 @@ export default function LoginPage() {
     }, []);
 
     const validatePassword = (password) => {
+        if (!password || password.trim() === "") return "Şifre alanı boş bırakılamaz.";
+        if (/\s/.test(password)) return "Şifre boşluk karakteri içeremez.";
         if (password.length < 8) return "Şifre en az 8 karakter uzunluğunda olmalıdır.";
-        if (!/[A-Z]/.test(password)) return "Şifre en az bir büyük harf içermelidir.";
         if (!/[a-z]/.test(password)) return "Şifre en az bir küçük harf içermelidir.";
+        if (!/[A-Z]/.test(password)) return "Şifre en az bir büyük harf içermelidir.";
         if (!/\d/.test(password)) return "Şifre en az bir rakam içermelidir.";
         if (!/[^a-zA-Z0-9]/.test(password)) return "Şifre en az bir özel karakter içermelidir.";
         return null;
@@ -93,6 +95,15 @@ export default function LoginPage() {
         const registrationNumber = e.target.registrationNumber.value;
         const email = e.target.email.value;
         const password = e.target.password.value;
+
+        if (!registrationNumber) {
+            setError("Sicil numarası boş bırakılamaz.");
+            return;
+        }
+        if (/\s/.test(registrationNumber)) {
+            setError("Sicil numarası boşluk karakteri içeremez.");
+            return;
+        }
 
         const validationError = validatePassword(password);
         if (validationError) {
