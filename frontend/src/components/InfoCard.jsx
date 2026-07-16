@@ -3,8 +3,11 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import HomeWorkIcon from '@mui/icons-material/HomeWork';
 import GroupsIcon from '@mui/icons-material/Groups';
 import PlaceIcon from '@mui/icons-material/Place';
+import DirectionsIcon from '@mui/icons-material/Directions';
+import CloseIcon from '@mui/icons-material/Close';
+import IconButton from '@mui/material/IconButton';
 
-function InfoCard({ selectedArea }) {
+function InfoCard({ selectedArea, onCreateRoute, isLoadingRoute, onClose }) {
   return (
     <div
       style={{
@@ -20,6 +23,24 @@ function InfoCard({ selectedArea }) {
         zIndex: 1000,
       }}
     >
+      {selectedArea && (
+  <IconButton
+    onClick={onClose}
+    size="small"
+    sx={{
+      position: 'absolute',
+      top: 12,
+      right: 12,
+      color: COLORS.textSecondary,
+      '&:hover': {
+        backgroundColor: '#f3f4f6',
+        color: COLORS.primary,
+      },
+    }}
+  >
+    <CloseIcon fontSize="small" />
+  </IconButton>
+)}
       {!selectedArea ? (
         <>
           <h3
@@ -33,7 +54,6 @@ function InfoCard({ selectedArea }) {
           >
             Toplanma Alanı
           </h3>
-
           <p
             style={{
               margin: 0,
@@ -120,6 +140,32 @@ function InfoCard({ selectedArea }) {
               {selectedArea.availability === 'available' ? 'Aktif' : 'Pasif'}
             </span>
           </div>
+          <button
+            onClick={onCreateRoute}
+            disabled={isLoadingRoute}
+            style={{
+              width: '100%',
+              marginTop: 20,
+              padding: '14px',
+              border: 'none',
+              borderRadius: 12,
+              background: COLORS.primary,
+              color: '#fff',
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: isLoadingRoute ? 'default' : 'pointer',
+              opacity: isLoadingRoute ? 0.7 : 1,
+              transition: 'all .2s ease',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <DirectionsIcon fontSize="small" />
+
+            {isLoadingRoute ? 'Rota Oluşturuluyor...' : 'Rota Oluştur'}
+          </button>
         </>
       )}
     </div>

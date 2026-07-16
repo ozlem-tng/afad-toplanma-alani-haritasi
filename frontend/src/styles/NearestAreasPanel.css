@@ -1,0 +1,129 @@
+.nearest-panel {
+  position: absolute;
+  top: 148px;
+  right: 24px;
+  width: 320px;
+  padding: 18px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(10, 54, 117, 0.14);
+  z-index: 1000;
+}
+
+.nearest-panel-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.nearest-title-icon {
+  color: #243553;
+  margin-top: 2px;
+}
+
+.nearest-title {
+  margin: 0;
+  color: #243553;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.nearest-subtitle {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.nearest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.nearest-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+   min-height: 58px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid #e5eaf0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.nearest-card:hover {
+  background: #f8fafc;
+  border-color: #c4cedb;
+}
+
+
+.nearest-card-active {
+  background: #f2f6fb;
+  border-color: #243553;
+  box-shadow: 0 5px 16px rgba(36, 53, 83, 0.12);
+}
+
+.nearest-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #243553;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.nearest-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.nearest-name {
+  color: #243553;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.nearest-distance {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.nearest-distance svg {
+  font-size: 15px;
+}
+
+.nearest-arrow {
+  flex-shrink: 0;
+  color: #94a3b8;
+  font-size: 16px !important;
+}
+
+.nearest-card:hover .nearest-arrow,
+.nearest-card-active .nearest-arrow {
+  color: #243553;
+}
+.nearest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
