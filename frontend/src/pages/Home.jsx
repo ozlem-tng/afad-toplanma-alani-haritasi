@@ -128,17 +128,10 @@ function Home() {
 
         setNearestAreas(nearest);
 
+        // EKLENECEK
+        setShowNearestPanel(true);
+
         console.log('nearest:', nearest);
-        console.log('show panel');
-
-        /*    const route = await getRoute(
-          location.latitude,
-          location.longitude,
-          selectedArea.latitude,
-          selectedArea.longitude,
-        );
-
-        setRouteData(route); */
       },
       (error) => {
         alert('Konum alınamadı.');
@@ -147,7 +140,6 @@ function Home() {
     );
   };
   const handleSelectArea = (area) => {
-    
     setSelectedArea(area);
     if (area) {
       setShowInfoCard(true);

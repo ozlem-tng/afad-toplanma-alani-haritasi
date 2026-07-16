@@ -1,9 +1,10 @@
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import { COLORS } from "../styles/colors";
 
-function LocationButton() {
+function LocationButton({ onClick }) {
   return (
     <button
+      onClick={onClick}
       style={{
         position: "absolute",
         bottom: 110,

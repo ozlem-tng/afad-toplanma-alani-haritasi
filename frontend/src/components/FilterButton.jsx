@@ -1,6 +1,6 @@
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
-import { COLORS } from '../styles/colors';
 import Badge from '@mui/material/Badge';
+import { COLORS } from '../styles/colors';
 
 function FilterButton({ open, activeCount = 0, onClick }) {
   return (
@@ -14,18 +14,19 @@ function FilterButton({ open, activeCount = 0, onClick }) {
         top: 24,
         right: 24,
         zIndex: 1000,
+
         height: 56,
         padding: '0 22px',
 
         border: 'none',
         borderRadius: 16,
 
-        background: COLORS.primary,
+        background: open ? COLORS.primaryHover : COLORS.primary,
         color: '#fff',
 
         display: 'flex',
         alignItems: 'center',
-        gap: 8,
+        gap: 10,
 
         fontSize: 14,
         fontWeight: 700,
@@ -35,16 +36,13 @@ function FilterButton({ open, activeCount = 0, onClick }) {
         boxShadow: '0 10px 30px rgba(10,54,117,.12)',
         transition: 'all .25s ease',
       }}
-      onMouseEnter={(event) => {
-        event.currentTarget.style.background = COLORS.primaryHover;
-        event.currentTarget.style.transform = 'translateY(-2px)';
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-2px)';
       }}
-      onMouseLeave={(event) => {
-        event.currentTarget.style.background = COLORS.primary;
-        event.currentTarget.style.transform = 'translateY(0)';
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
       }}
     >
-      <FilterAltIcon />
       <Badge
         badgeContent={activeCount}
         color="error"

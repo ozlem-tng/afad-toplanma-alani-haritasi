@@ -83,7 +83,7 @@ function SearchBar({
           )}
         </div>
 
-        {setShowSuggestions && searchText && filteredAreas.length > 0 && (
+        {showSuggestions && searchText && filteredAreas.length > 0 && (
           <div
             style={{
               position: 'absolute',
