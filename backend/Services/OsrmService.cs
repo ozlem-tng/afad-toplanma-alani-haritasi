@@ -19,7 +19,7 @@ public class OsrmService
         double endLongitude)
     {
         var url =
-     $"https://router.project-osrm.org/route/v1/driving/" +
+     $"http://router.project-osrm.org/route/v1/driving/" +
      $"{startLongitude.ToString(CultureInfo.InvariantCulture)},{startLatitude.ToString(CultureInfo.InvariantCulture)};" +
      $"{endLongitude.ToString(CultureInfo.InvariantCulture)},{endLatitude.ToString(CultureInfo.InvariantCulture)}" +
      "?overview=full&geometries=geojson";

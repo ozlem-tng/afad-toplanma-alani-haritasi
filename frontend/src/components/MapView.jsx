@@ -37,12 +37,19 @@ function MapView({
   const featuresRef = useRef([]);
   const previousAreasKeyRef = useRef('');
 
-  // Toplanma alanı ve kullanıcı konumu feature'larını oluşturur.
+  const isValidCoordinate = (lat, lon) => {
+    const latitude = Number(lat);
+    const longitude = Number(lon);
+    return !isNaN(latitude) && !isNaN(longitude) && lat !== null && lon !== null;
+  };
+
   const createFeatures = (areaList) => {
-    const features = areaList.map((area) => {
+    const validAreas = areaList.filter(area => area && isValidCoordinate(area.latitude, area.longitude));
+    
+    const features = validAreas.map((area) => {
       const feature = new Feature({
         geometry: new Point(
-          fromLonLat([area.longitude, area.latitude]),
+          fromLonLat([Number(area.longitude), Number(area.latitude)]),
         ),
       });
 
@@ -51,12 +58,12 @@ function MapView({
       return feature;
     });
 
-    if (userLocation) {
+    if (userLocation && isValidCoordinate(userLocation.latitude, userLocation.longitude)) {
       const userFeature = new Feature({
         geometry: new Point(
           fromLonLat([
-            userLocation.longitude,
-            userLocation.latitude,
+            Number(userLocation.longitude),
+            Number(userLocation.latitude),
           ]),
         ),
       });
@@ -84,7 +91,6 @@ function MapView({
     return features;
   };
 
-  // Marker stillerini günceller.
   const updateMarkerStyles = () => {
     featuresRef.current.forEach((feature) => {
       const area = feature.get('areaData');
@@ -116,17 +122,22 @@ function MapView({
     });
   };
 
-  // Filtrelenen toplanma alanlarını haritaya sığdırır.
   const fitMapToAreas = () => {
-    if (!mapInstance.current || areas.length === 0) return;
+    if (!mapInstance.current || !areas) return;
+
+    const validAreas = areas.filter(
+      (area) => area && isValidCoordinate(area.latitude, area.longitude)
+    );
+
+    if (validAreas.length === 0) return;
 
     const view = mapInstance.current.getView();
 
-    if (areas.length === 1) {
+    if (validAreas.length === 1) {
       view.animate({
         center: fromLonLat([
-          areas[0].longitude,
-          areas[0].latitude,
+          Number(validAreas[0].longitude),
+          Number(validAreas[0].latitude),
         ]),
         zoom: 16,
         duration: 800,
@@ -135,17 +146,24 @@ function MapView({
       return;
     }
 
-    const coordinates = areas.map((area) =>
-      fromLonLat([area.longitude, area.latitude]),
+    const coordinates = validAreas.map((area) =>
+      fromLonLat([Number(area.longitude), Number(area.latitude)]),
     );
 
-    const extent = boundingExtent(coordinates);
-
-    view.fit(extent, {
-      padding: [150, 150, 150, 150],
-      duration: 800,
-      maxZoom: areas.length <= 5 ? 15 : 14,
-    });
+    try {
+      const extent = boundingExtent(coordinates);
+      const isExtentValid = extent && extent.every(coord => isFinite(coord));
+      
+      if (isExtentValid) {
+        view.fit(extent, {
+          padding: [150, 150, 150, 150],
+          duration: 800,
+          maxZoom: validAreas.length <= 5 ? 15 : 14,
+        });
+      }
+    } catch (e) {
+      console.warn("Harita sınırları hesaplanamadı:", e);
+    }
   };
 
   const styleZoomButtons = () => {
@@ -160,8 +178,7 @@ function MapView({
       button.style.color = '#FFFFFF';
       button.style.border = 'none';
       button.style.borderRadius = '12px';
-      button.style.boxShadow =
-        '0 8px 20px rgba(10,54,117,.18)';
+      button.style.boxShadow = '0 8px 20px rgba(10,54,117,.18)';
       button.style.transition = 'all .2s ease';
 
       button.onmouseenter = () => {
@@ -184,7 +201,6 @@ function MapView({
         event.pixel,
         (feature) => {
           const area = feature.get('areaData');
-
           return area ? feature : undefined;
         },
       );
@@ -199,7 +215,6 @@ function MapView({
     onSelectArea(null);
   };
 
-  // Haritayı yalnızca bir kez oluşturur.
   useEffect(() => {
     vectorSourceRef.current = new VectorSource();
     routeSourceRef.current = new VectorSource();
@@ -239,7 +254,6 @@ function MapView({
     };
   }, []);
 
-  // Alanlar veya kullanıcı konumu değiştiğinde markerları günceller.
   useEffect(() => {
     if (!vectorSourceRef.current) return;
 
@@ -253,8 +267,8 @@ function MapView({
     updateMarkerStyles();
 
     const currentAreasKey = areas
-      .map((area) => area.id)
-      .sort((a, b) => a - b)
+      .map((area) => area?.id || '')
+      .sort((a, b) => String(a).localeCompare(String(b)))
       .join(',');
 
     const areasActuallyChanged =
@@ -266,29 +280,29 @@ function MapView({
     }
   }, [areas, userLocation]);
 
-  // Seçili marker değiştiğinde stil ve zoom günceller.
   useEffect(() => {
     updateMarkerStyles();
 
     if (!selectedArea || !mapInstance.current) return;
+    if (!isValidCoordinate(selectedArea.latitude, selectedArea.longitude)) return;
 
     if (userLocation) return;
 
     mapInstance.current.getView().animate({
       center: fromLonLat([
-        selectedArea.longitude,
-        selectedArea.latitude,
+        Number(selectedArea.longitude),
+        Number(selectedArea.latitude),
       ]),
       zoom: SELECTED_AREA_ZOOM,
       duration: 800,
     });
   }, [selectedArea, userLocation]);
 
-  // Kullanıcı konumunu veya kullanıcı-alan ikilisini gösterir.
   useEffect(() => {
     if (
       !mapInstance.current ||
       !userLocation ||
+      !isValidCoordinate(userLocation.latitude, userLocation.longitude) ||
       routeGeometry
     ) {
       return;
@@ -296,38 +310,45 @@ function MapView({
 
     const view = mapInstance.current.getView();
 
-    if (selectedArea) {
-      const extent = boundingExtent([
-        fromLonLat([
-          userLocation.longitude,
-          userLocation.latitude,
-        ]),
-        fromLonLat([
-          selectedArea.longitude,
-          selectedArea.latitude,
-        ]),
-      ]);
+    if (selectedArea && isValidCoordinate(selectedArea.latitude, selectedArea.longitude)) {
+      try {
+        const extent = boundingExtent([
+          fromLonLat([
+            Number(userLocation.longitude),
+            Number(userLocation.latitude),
+          ]),
+          fromLonLat([
+            Number(selectedArea.longitude),
+            Number(selectedArea.latitude),
+          ]),
+        ]);
 
-      view.fit(extent, {
-        padding: [120, 120, 120, 120],
-        duration: 800,
-        maxZoom: 19,
-      });
+        const isExtentValid = extent && extent.every(coord => isFinite(coord));
+
+        if (isExtentValid) {
+          view.fit(extent, {
+            padding: [120, 120, 120, 120],
+            duration: 800,
+            maxZoom: 19,
+          });
+        }
+      } catch (e) {
+        console.warn("Kullanıcı-alan sınırı hesaplanamadı:", e);
+      }
 
       return;
     }
 
     view.animate({
       center: fromLonLat([
-        userLocation.longitude,
-        userLocation.latitude,
+        Number(userLocation.longitude),
+        Number(userLocation.latitude),
       ]),
       zoom: 15,
       duration: 800,
     });
   }, [userLocation, selectedArea, routeGeometry]);
 
-  // Backend'den gelen rota koordinatlarını haritada çizer.
   useEffect(() => {
     if (!routeSourceRef.current || !mapInstance.current) {
       return;
@@ -346,7 +367,7 @@ function MapView({
 
     const projectedCoordinates = routeCoordinates.map(
       ([longitude, latitude]) =>
-        fromLonLat([longitude, latitude]),
+        fromLonLat([Number(longitude), Number(latitude)]),
     );
 
     const routeFeature = new Feature({
@@ -369,11 +390,15 @@ function MapView({
     const routeExtent =
       routeFeature.getGeometry().getExtent();
 
-    mapInstance.current.getView().fit(routeExtent, {
-      padding: [100, 100, 100, 100],
-      duration: 900,
-      maxZoom: 17,
-    });
+    const isRouteExtentValid = routeExtent && routeExtent.every(coord => isFinite(coord));
+
+    if (isRouteExtentValid) {
+      mapInstance.current.getView().fit(routeExtent, {
+        padding: [100, 100, 100, 100],
+        duration: 900,
+        maxZoom: 17,
+      });
+    }
   }, [routeGeometry]);
 
   return (
