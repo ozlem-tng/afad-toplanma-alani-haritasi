@@ -1,0 +1,214 @@
+@reference "tailwindcss";
+
+.card {
+    @apply w-full bg-white/90 backdrop-blur-xl rounded-[40px] p-8 border border-white/40 flex flex-col min-h-[550px];
+    box-shadow: 0 30px 80px rgba(10, 54, 117, 0.15);
+}
+
+@media (min-width: 640px) {
+    .card {
+        @apply p-10;
+    }
+}
+
+.logo {
+    @apply flex items-center justify-center gap-5 mb-6;
+}
+
+.logoIcon {
+    @apply w-20 h-20 rounded-2xl bg-[#0a3675] flex items-center justify-center;
+    box-shadow: 0 25px 50px -12px rgba(10, 54, 117, 0.4);
+}
+
+.logoIconInner {
+    @apply w-10 h-10 text-white;
+}
+
+.logoTitle {
+    @apply text-4xl font-black text-[#0a3675] tracking-tight;
+}
+
+.logoSubtitle {
+    @apply text-sm text-slate-400 font-medium;
+}
+
+.tabs {
+    @apply flex gap-14 border-b border-slate-200/70 w-full justify-center mb-6;
+}
+
+.tabButton {
+    @apply pb-4 text-lg font-bold tracking-widest transition-all relative;
+}
+
+.tabActive {
+    @apply text-[#0a3675];
+}
+
+.tabInactive {
+    @apply text-slate-400;
+}
+
+.tabUnderline {
+    @apply absolute bottom-0 left-0 w-full h-0.5 bg-[#0a3675] rounded-full;
+}
+
+.title {
+    @apply text-3xl font-black text-[#091a36] text-center mb-2;
+}
+
+@media (min-width: 640px) {
+    .title {
+        @apply text-4xl;
+    }
+}
+
+.subtitle {
+    @apply text-base text-slate-400 text-center mb-7 font-medium;
+}
+
+.form {
+    @apply space-y-5;
+}
+
+.label {
+    @apply block text-sm font-bold text-slate-600 tracking-wider mb-2;
+}
+
+.inputWrapper {
+    @apply relative;
+}
+
+.inputIcon {
+    @apply absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400;
+}
+
+.input {
+    @apply w-full h-14 pl-14 pr-5 rounded-2xl border-2 border-slate-200 text-lg text-slate-800 placeholder-slate-300 bg-slate-50/60;
+    transition: all 0.2s;
+}
+
+.input:focus {
+    @apply outline-none ring-4 ring-blue-900/10 border-[#0a3675];
+}
+
+.input:hover {
+    @apply border-[#0a3675]/30;
+}
+
+.inputPassword {
+    @apply w-full h-14 pl-14 pr-16 rounded-2xl border-2 border-slate-200 text-lg text-slate-800 bg-slate-50/60;
+    transition: all 0.2s;
+}
+
+.inputPassword:focus {
+    @apply outline-none ring-4 ring-blue-900/10 border-[#0a3675];
+}
+
+.inputPassword:hover {
+    @apply border-[#0a3675]/30;
+}
+
+.passwordToggle {
+    @apply absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600;
+}
+
+.capsLockWarning {
+    @apply flex items-center gap-2 mt-2 text-amber-600 text-sm font-bold;
+}
+
+.headerRight {
+    @apply flex items-center justify-between mb-2;
+}
+
+.forgotPassword {
+    @apply text-sm font-bold text-[#0a3675] hover:underline;
+}
+
+.submitButton {
+    @apply w-full h-14 rounded-2xl bg-gradient-to-r from-[#0a3675] to-[#1a4f8f] text-white text-lg font-bold tracking-widest mt-3 flex items-center justify-center gap-3;
+    box-shadow: 0 20px 25px -5px rgba(10, 54, 117, 0.3);
+    transition: all 0.3s;
+}
+
+.submitButton:hover {
+    box-shadow: 0 25px 50px -8px rgba(10, 54, 117, 0.5);
+    transform: translateY(-2px);
+}
+
+.submitIcon {
+    @apply transition-transform duration-300;
+}
+
+.submitButton:hover .submitIcon {
+    @apply scale-110;
+}
+
+/* KAYIT FORMU */
+.registerForm {
+    @apply space-y-4;
+}
+
+.registerLabel {
+    @apply block text-sm font-bold text-slate-600 tracking-wider mb-1.5;
+}
+
+.registerInput {
+    @apply w-full h-12 pl-12 pr-4 rounded-xl border-2 border-slate-200 text-base text-slate-800 placeholder-slate-300 bg-slate-50/60;
+    transition: all 0.2s;
+}
+
+.registerInput:focus {
+    @apply outline-none ring-4 ring-blue-900/10 border-[#0a3675];
+}
+
+.registerInput:hover {
+    @apply border-[#0a3675]/30;
+}
+
+.registerInputPassword {
+    @apply w-full h-12 pl-12 pr-14 rounded-xl border-2 border-slate-200 text-base text-slate-800 bg-slate-50/60;
+    transition: all 0.2s;
+}
+
+.registerInputPassword:focus {
+    @apply outline-none ring-4 ring-blue-900/10 border-[#0a3675];
+}
+
+.registerInputPassword:hover {
+    @apply border-[#0a3675]/30;
+}
+
+.registerPasswordToggle {
+    @apply absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600;
+}
+
+.registerIcon {
+    @apply absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400;
+}
+
+.registerSubmit {
+    @apply w-full h-12 rounded-xl bg-gradient-to-r from-[#0a3675] to-[#1a4f8f] text-white text-base font-bold tracking-widest flex items-center justify-center gap-3;
+    box-shadow: 0 20px 25px -5px rgba(10, 54, 117, 0.3);
+    transition: all 0.3s;
+}
+
+.registerSubmit:hover {
+    box-shadow: 0 25px 50px -8px rgba(10, 54, 117, 0.5);
+    transform: translateY(-2px);
+}
+
+.registerSubmitIcon {
+    @apply transition-transform duration-300;
+}
+
+.registerSubmit:hover .registerSubmitIcon {
+    @apply scale-110;
+}
+
+.registerLink {
+    @apply text-center text-xs text-slate-400 mt-4;
+}
+
+.registerLinkButton {
+    @apply text-[#0a3675] font-bold hover:underline;
+}
