@@ -1,2 +1,14 @@
-backend/bin/
-backend/obj/
+# Build results
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio / VS Code user settings
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# .NET Tools manifest
+.dotnet/

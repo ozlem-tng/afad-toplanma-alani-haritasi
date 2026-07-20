@@ -1,46 +1,35 @@
 using Microsoft.AspNetCore.Mvc;
-using System.IO;
+using Microsoft.EntityFrameworkCore;
 
-namespace backend.Controllers;
-
+[Route("api/[controller]")]
 [ApiController]
-[Route("api/geo")]
-public class GeoController : ControllerBase
+public class PlacesController : ControllerBase
 {
-    private readonly IWebHostEnvironment _environment;
+    private readonly backend.Data.AppDbContext _context;
 
-    public GeoController(IWebHostEnvironment environment)
+    public PlacesController(backend.Data.AppDbContext context)
     {
-        _environment = environment;
+        _context = context;
     }
 
-    [HttpGet("gathering-areas")]
-    public IActionResult GetGatheringAreas()
+    [HttpGet]
+    public async Task<IActionResult> GetPlaces()
     {
-        var path = Path.Combine(
-            _environment.ContentRootPath,
-            "GeoData",
-            "TOPLANMAALANLARI_recent.geojson");
-
-        if (!System.IO.File.Exists(path))
-            return NotFound("GeoJSON file was not found.");
-
-        var json = System.IO.File.ReadAllText(path);
-        return Content(json, "application/json");
+        var places = await _context.Places.ToListAsync();
+        return Ok(places);
     }
 
-    [HttpGet("ankara-boundary")]
-    public IActionResult GetAnkaraBoundary()
+    // Optional: Spatial query example (e.g., find places near a coordinate)
+    [HttpGet("nearby")]
+    public async Task<IActionResult> GetNearbyPlaces(double longitude, double latitude, double radiusInMeters = 5000)
     {
-        var path = Path.Combine(
-            _environment.ContentRootPath,
-            "GeoData",
-            "ANKARA_IL_SINIRI.geojson");
+        var referencePoint = new NetTopologySuite.Geometries.Point(longitude, latitude) { SRID = 4326 };
 
-        if (!System.IO.File.Exists(path))
-            return NotFound("GeoJSON file was not found.");
+        // Uses PostGIS ST_Distance within EF Core to query by distance efficiently using the GIST index
+        var nearbyPlaces = await _context.Places
+            .Where(p => p.Geom.IsWithinDistance(referencePoint, radiusInMeters / 111320.0)) // Rough degree approximation or use raw SQL if preferred
+            .ToListAsync();
 
-        var json = System.IO.File.ReadAllText(path);
-        return Content(json, "application/json");
+        return Ok(nearbyPlaces);
     }
 }

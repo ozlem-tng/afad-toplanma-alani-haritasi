@@ -10,11 +10,15 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-// ADD THIS: Registers OsrmService alongside an internal HttpClient factory instance
 builder.Services.AddHttpClient<OsrmService>();
 
+builder.Services.AddScoped<GeoDataServices>();
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseInMemoryDatabase("XYDataDb"));
+    options.UseNpgsql(
+        "Host=127.0.0.1;Database=afad_toplanma_alani_haritasi;Username=postgres;Password=Bhjd1903..",
+        x => x.UseNetTopologySuite()
+    ));
 
 builder.Services.AddCors(options =>
 {
@@ -27,6 +31,30 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        var geoService = services.GetRequiredService<GeoDataServices>();
+
+        // Ensure database is created and migrated
+        Console.WriteLine("Applying pending migrations...");
+        await context.Database.MigrateAsync();
+
+        var geoJsonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GeoData", "TOPLANMAALANLARI_recent.geojson");
+
+        Console.WriteLine($"Checking database and seeding spatial points from: {geoJsonPath}");
+        await geoService.SeedGeoJsonDataAsync(geoJsonPath);
+        Console.WriteLine("Database check and seeding execution finished.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"An error occurred during database startup/seeding: {ex.Message}");
+    }
+}
 
 if (app.Environment.IsDevelopment())
 {
