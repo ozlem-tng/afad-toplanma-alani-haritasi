@@ -9,9 +9,10 @@ import InfoCard from '../components/InfoCard';
 import FilterPanel from '../components/FilterPanel';
 import NearestAreasPanel from '../components/NearestAreasPanel';
 import NearestAreasButton from '../components/NearestAreasButton';
+
+import RoutePanel from '../components/RoutePanel';
 import { getRoute } from '../api/route';
 import { getNearestAreas } from '../services/nearestAreaMockService';
-
 function Home() {
   const navigate = useNavigate();
   const [areas, setAreas] = useState([]);
@@ -27,6 +28,7 @@ function Home() {
   const [showNearestPanel, setShowNearestPanel] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [showInfoCard, setShowInfoCard] = useState(false);
+  const [travelMode, setTravelMode] = useState('walking');
 
   const emptyFilters = {
     district: '',
@@ -44,8 +46,10 @@ function Home() {
   useEffect(() => {
     const fetchAreas = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:5000/api/geo/gathering-areas');
-        
+        const response = await fetch(
+          'http://127.0.0.1:5000/api/geo/gathering-areas',
+        );
+
         if (!response.ok) {
           throw new Error(`Veri çekilemedi: ${response.statusText}`);
         }
@@ -53,7 +57,7 @@ function Home() {
         const geoJsonData = await response.json();
 
         if (!geoJsonData || !geoJsonData.features) {
-          throw new Error("Geçersiz GeoJSON veri yapısı.");
+          throw new Error('Geçersiz GeoJSON veri yapısı.');
         }
 
         const mappedAreas = geoJsonData.features.map((feature) => {
@@ -67,12 +71,21 @@ function Home() {
               latitude = geom.coordinates[1];
             } else if (geom.type === 'Polygon' && geom.coordinates[0]) {
               const ring = geom.coordinates[0];
-              const sum = ring.reduce((acc, coord) => [acc[0] + coord[0], acc[1] + coord[1]], [0, 0]);
+              const sum = ring.reduce(
+                (acc, coord) => [acc[0] + coord[0], acc[1] + coord[1]],
+                [0, 0],
+              );
               longitude = sum[0] / ring.length;
               latitude = sum[1] / ring.length;
-            } else if (geom.type === 'MultiPolygon' && geom.coordinates[0]?.[0]) {
+            } else if (
+              geom.type === 'MultiPolygon' &&
+              geom.coordinates[0]?.[0]
+            ) {
               const ring = geom.coordinates[0][0];
-              const sum = ring.reduce((acc, coord) => [acc[0] + coord[0], acc[1] + coord[1]], [0, 0]);
+              const sum = ring.reduce(
+                (acc, coord) => [acc[0] + coord[0], acc[1] + coord[1]],
+                [0, 0],
+              );
               longitude = sum[0] / ring.length;
               latitude = sum[1] / ring.length;
             }
@@ -81,21 +94,28 @@ function Home() {
           const props = feature.properties || {};
           return {
             id: props.ID || props.OBJECTID || props.id || Math.random(),
-            name: props.ADI || props.TOPLANMA_ALANI_ADI || props.name || "Toplanma Alanı",
-            district: props.ILCE_ADI || props.ILCE || props.district || "",
-            neighborhood: props.MAHALLE_ADI || props.MAHALLE || props.neighborhood || "",
+            name:
+              props.ADI ||
+              props.TOPLANMA_ALANI_ADI ||
+              props.name ||
+              'Toplanma Alanı',
+            district: props.ILCE_ADI || props.ILCE || props.district || '',
+            neighborhood:
+              props.MAHALLE_ADI || props.MAHALLE || props.neighborhood || '',
             latitude: latitude !== null ? Number(latitude) : null,
             longitude: longitude !== null ? Number(longitude) : null,
             capacity: props.KAPASITE || props.KAPASITESI || 0,
             availability: 'available',
-            type: props.TURU || 'Toplanma Alanı'
+            type: props.TURU || 'Toplanma Alanı',
           };
         });
 
-        const cleanAreas = mappedAreas.filter(area => area.latitude !== null && area.longitude !== null);
+        const cleanAreas = mappedAreas.filter(
+          (area) => area.latitude !== null && area.longitude !== null,
+        );
         setAreas(cleanAreas);
       } catch (err) {
-        console.error("Toplanma alanları yüklenirken hata:", err);
+        console.error('Toplanma alanları yüklenirken hata:', err);
         setError(err.message);
       }
     };
@@ -113,8 +133,8 @@ function Home() {
           longitude: position.coords.longitude,
         });
       },
-      (err) => console.warn("Kullanıcı konumu alınamadı.", err),
-      { enableHighAccuracy: true }
+      (err) => console.warn('Kullanıcı konumu alınamadı.', err),
+      { enableHighAccuracy: true },
     );
   }, []);
 
@@ -172,14 +192,33 @@ function Home() {
           setNearestAreas(nearest);
           setShowNearestPanel(true);
         } catch (err) {
-          console.error("En yakın alanlar getirilirken hata oluştu:", err);
+          console.error('En yakın alanlar getirilirken hata oluştu:', err);
         }
+        setStartPoint({
+          type: 'current-location',
+          label: 'Mevcut Konum',
+          description: `${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}`,
+          latitude: location.latitude,
+          longitude: location.longitude,
+        });
+
+        const nearest = await getNearestAreas(
+          location.latitude,
+          location.longitude,
+        );
+
+        setNearestAreas(nearest);
+
+        // EKLENECEK
+        setShowNearestPanel(true);
+
+        console.log('nearest:', nearest);
       },
       (err) => {
         alert('Konum alınamadı.');
         console.error(err);
       },
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: true },
     );
   };
 
@@ -190,6 +229,26 @@ function Home() {
     } else {
       setShowInfoCard(false);
     }
+    setRouteGeometry(null);
+    setRouteInfo(null);
+  };
+
+  const handleSelectStartPointFromMap = (coordinates) => {
+    if (!coordinates) return;
+
+    const { latitude, longitude } = coordinates;
+
+    setStartPoint({
+      type: 'map',
+      label: 'Haritadan Seçilen Konum',
+      description: `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
+      latitude,
+      longitude,
+    });
+
+    setIsSelectingStartPoint(false);
+
+    // Daha önce çizilmiş bir rota varsa temizle
     setRouteGeometry(null);
     setRouteInfo(null);
   };
@@ -237,7 +296,9 @@ function Home() {
 
   if (error) {
     return (
-      <div style={{ padding: '24px', fontFamily: 'sans-serif', color: '#DC2626' }}>
+      <div
+        style={{ padding: '24px', fontFamily: 'sans-serif', color: '#DC2626' }}
+      >
         <h3>Harita yüklenirken hata oluştu:</h3>
         <p>{error}</p>
       </div>
@@ -255,8 +316,11 @@ function Home() {
           onSelectArea={handleSelectArea}
           userLocation={userLocation}
           routeGeometry={routeGeometry}
+          isSelectingStartPoint={isSelectingStartPoint}
+          startPoint={startPoint}
+          onSelectStartPoint={handleSelectStartPointFromMap}
         />
-        
+
         {showNearestPanel && (
           <NearestAreasPanel
             nearestAreas={nearestAreas}
@@ -286,7 +350,28 @@ function Home() {
           activeCount={activeFilterCount}
           onClick={() => setFilterOpen(!filterOpen)}
         />
+        <RoutePanel
+          open={routePanelOpen}
+          selectedArea={selectedArea}
+          travelMode={travelMode}
+          startPoint={startPoint}
+          onTravelModeChange={setTravelMode}
+          onClose={() => {
+            setRoutePanelOpen(false);
+            setIsSelectingStartPoint(false);
 
+            if (selectedArea) {
+              setShowInfoCard(true);
+            }
+          }}
+          onUseCurrentLocation={handleGetLocation}
+          onSelectFromMap={() => {
+            setIsSelectingStartPoint(true);
+          }}
+          onSearchAddress={() => {
+            console.log('Adres ara');
+          }}
+        />
         <FilterPanel
           open={filterOpen}
           areas={areas}
@@ -307,8 +392,10 @@ function Home() {
         {showInfoCard && selectedArea && (
           <InfoCard
             selectedArea={selectedArea}
-            onCreateRoute={handleCreateRoute}
-            isLoadingRoute={isLoadingRoute}
+            onOpenRoutePanel={() => {
+              setShowInfoCard(false);
+              setRoutePanelOpen(true);
+            }}
             onClose={() => setShowInfoCard(false)}
           />
         )}

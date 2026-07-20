@@ -7,7 +7,7 @@ import DirectionsIcon from '@mui/icons-material/Directions';
 import CloseIcon from '@mui/icons-material/Close';
 import IconButton from '@mui/material/IconButton';
 
-function InfoCard({ selectedArea, onCreateRoute, isLoadingRoute, onClose }) {
+function InfoCard({ selectedArea, onClose, onOpenRoutePanel }) {
   return (
     <div
       style={{
@@ -24,23 +24,23 @@ function InfoCard({ selectedArea, onCreateRoute, isLoadingRoute, onClose }) {
       }}
     >
       {selectedArea && (
-  <IconButton
-    onClick={onClose}
-    size="small"
-    sx={{
-      position: 'absolute',
-      top: 12,
-      right: 12,
-      color: COLORS.textSecondary,
-      '&:hover': {
-        backgroundColor: '#f3f4f6',
-        color: COLORS.primary,
-      },
-    }}
-  >
-    <CloseIcon fontSize="small" />
-  </IconButton>
-)}
+        <IconButton
+          onClick={onClose}
+          size="small"
+          sx={{
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            color: COLORS.textSecondary,
+            '&:hover': {
+              backgroundColor: '#f3f4f6',
+              color: COLORS.primary,
+            },
+          }}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      )}
       {!selectedArea ? (
         <>
           <h3
@@ -141,8 +141,7 @@ function InfoCard({ selectedArea, onCreateRoute, isLoadingRoute, onClose }) {
             </span>
           </div>
           <button
-            onClick={onCreateRoute}
-            disabled={isLoadingRoute}
+            onClick={onOpenRoutePanel}
             style={{
               width: '100%',
               marginTop: 20,
@@ -153,8 +152,7 @@ function InfoCard({ selectedArea, onCreateRoute, isLoadingRoute, onClose }) {
               color: '#fff',
               fontSize: 15,
               fontWeight: 600,
-              cursor: isLoadingRoute ? 'default' : 'pointer',
-              opacity: isLoadingRoute ? 0.7 : 1,
+              cursor: 'pointer',
               transition: 'all .2s ease',
               display: 'flex',
               justifyContent: 'center',
@@ -163,8 +161,7 @@ function InfoCard({ selectedArea, onCreateRoute, isLoadingRoute, onClose }) {
             }}
           >
             <DirectionsIcon fontSize="small" />
-
-            {isLoadingRoute ? 'Rota Oluşturuluyor...' : 'Rota Oluştur'}
+            Rota Oluştur
           </button>
         </>
       )}

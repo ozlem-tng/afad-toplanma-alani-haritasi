@@ -9,7 +9,7 @@ import VectorSource from 'ol/source/Vector';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import LineString from 'ol/geom/LineString';
-import { fromLonLat } from 'ol/proj';
+import { fromLonLat, toLonLat } from 'ol/proj';
 import { Style, Circle, Fill, Stroke } from 'ol/style';
 import { boundingExtent } from 'ol/extent';
 
@@ -27,6 +27,9 @@ function MapView({
   onSelectArea,
   userLocation,
   routeGeometry,
+  isSelectingStartPoint,
+  startPoint,
+  onSelectStartPoint,
 }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
@@ -40,12 +43,16 @@ function MapView({
   const isValidCoordinate = (lat, lon) => {
     const latitude = Number(lat);
     const longitude = Number(lon);
-    return !isNaN(latitude) && !isNaN(longitude) && lat !== null && lon !== null;
+    return (
+      !isNaN(latitude) && !isNaN(longitude) && lat !== null && lon !== null
+    );
   };
 
   const createFeatures = (areaList) => {
-    const validAreas = areaList.filter(area => area && isValidCoordinate(area.latitude, area.longitude));
-    
+    const validAreas = areaList.filter(
+      (area) => area && isValidCoordinate(area.latitude, area.longitude),
+    );
+
     const features = validAreas.map((area) => {
       const feature = new Feature({
         geometry: new Point(
@@ -58,7 +65,10 @@ function MapView({
       return feature;
     });
 
-    if (userLocation && isValidCoordinate(userLocation.latitude, userLocation.longitude)) {
+    if (
+      userLocation &&
+      isValidCoordinate(userLocation.latitude, userLocation.longitude)
+    ) {
       const userFeature = new Feature({
         geometry: new Point(
           fromLonLat([
@@ -67,6 +77,33 @@ function MapView({
           ]),
         ),
       });
+
+      if (startPoint) {
+        const startFeature = new Feature({
+          geometry: new Point(
+            fromLonLat([startPoint.longitude, startPoint.latitude]),
+          ),
+        });
+
+        startFeature.set('featureType', 'startPoint');
+
+        startFeature.setStyle(
+          new Style({
+            image: new Circle({
+              radius: 9,
+              fill: new Fill({
+                color: '#2563EB',
+              }),
+              stroke: new Stroke({
+                color: '#FFFFFF',
+                width: 3,
+              }),
+            }),
+          }),
+        );
+
+        features.push(startFeature);
+      }
 
       userFeature.set('featureType', 'userLocation');
 
@@ -126,7 +163,7 @@ function MapView({
     if (!mapInstance.current || !areas) return;
 
     const validAreas = areas.filter(
-      (area) => area && isValidCoordinate(area.latitude, area.longitude)
+      (area) => area && isValidCoordinate(area.latitude, area.longitude),
     );
 
     if (validAreas.length === 0) return;
@@ -152,8 +189,8 @@ function MapView({
 
     try {
       const extent = boundingExtent(coordinates);
-      const isExtentValid = extent && extent.every(coord => isFinite(coord));
-      
+      const isExtentValid = extent && extent.every((coord) => isFinite(coord));
+
       if (isExtentValid) {
         view.fit(extent, {
           padding: [150, 150, 150, 150],
@@ -162,7 +199,7 @@ function MapView({
         });
       }
     } catch (e) {
-      console.warn("Harita sınırları hesaplanamadı:", e);
+      console.warn('Harita sınırları hesaplanamadı:', e);
     }
   };
 
@@ -196,14 +233,33 @@ function MapView({
   const handleMapClick = (event) => {
     if (!mapInstance.current) return;
 
-    const areaFeature =
-      mapInstance.current.forEachFeatureAtPixel(
-        event.pixel,
-        (feature) => {
-          const area = feature.get('areaData');
-          return area ? feature : undefined;
-        },
-      );
+    const areaFeature = mapInstance.current.forEachFeatureAtPixel(
+      event.pixel,
+      (feature) => {
+        const area = feature.get('areaData');
+        return area ? feature : undefined;
+      },
+    );
+    // Başlangıç noktası seçme modu
+    if (isSelectingStartPoint) {
+      const [longitude, latitude] = toLonLat(event.coordinate);
+
+      onSelectStartPoint({
+        latitude,
+        longitude,
+      });
+
+      return;
+    }
+
+    const areaFeature = mapInstance.current.forEachFeatureAtPixel(
+      event.pixel,
+      (feature) => {
+        const area = feature.get('areaData');
+
+        return area ? feature : undefined;
+      },
+    );
 
     const area = areaFeature?.get('areaData');
 
@@ -246,13 +302,14 @@ function MapView({
 
     styleZoomButtons();
 
-    mapInstance.current.on('click', handleMapClick);
-
+    mapInstance.current.on('click', (event) => {
+      handleMapClick(event);
+    });
     return () => {
       mapInstance.current?.setTarget(undefined);
       mapInstance.current = null;
     };
-  }, []);
+  }, [isSelectingStartPoint]);
 
   useEffect(() => {
     if (!vectorSourceRef.current) return;
@@ -278,13 +335,14 @@ function MapView({
       fitMapToAreas();
       previousAreasKeyRef.current = currentAreasKey;
     }
-  }, [areas, userLocation]);
+  }, [areas, userLocation, startPoint]);
 
   useEffect(() => {
     updateMarkerStyles();
 
     if (!selectedArea || !mapInstance.current) return;
-    if (!isValidCoordinate(selectedArea.latitude, selectedArea.longitude)) return;
+    if (!isValidCoordinate(selectedArea.latitude, selectedArea.longitude))
+      return;
 
     if (userLocation) return;
 
@@ -310,7 +368,10 @@ function MapView({
 
     const view = mapInstance.current.getView();
 
-    if (selectedArea && isValidCoordinate(selectedArea.latitude, selectedArea.longitude)) {
+    if (
+      selectedArea &&
+      isValidCoordinate(selectedArea.latitude, selectedArea.longitude)
+    ) {
       try {
         const extent = boundingExtent([
           fromLonLat([
@@ -323,7 +384,8 @@ function MapView({
           ]),
         ]);
 
-        const isExtentValid = extent && extent.every(coord => isFinite(coord));
+        const isExtentValid =
+          extent && extent.every((coord) => isFinite(coord));
 
         if (isExtentValid) {
           view.fit(extent, {
@@ -333,7 +395,7 @@ function MapView({
           });
         }
       } catch (e) {
-        console.warn("Kullanıcı-alan sınırı hesaplanamadı:", e);
+        console.warn('Kullanıcı-alan sınırı hesaplanamadı:', e);
       }
 
       return;
@@ -358,16 +420,12 @@ function MapView({
 
     const routeCoordinates = routeGeometry?.coordinates;
 
-    if (
-      !Array.isArray(routeCoordinates) ||
-      routeCoordinates.length < 2
-    ) {
+    if (!Array.isArray(routeCoordinates) || routeCoordinates.length < 2) {
       return;
     }
 
-    const projectedCoordinates = routeCoordinates.map(
-      ([longitude, latitude]) =>
-        fromLonLat([Number(longitude), Number(latitude)]),
+    const projectedCoordinates = routeCoordinates.map(([longitude, latitude]) =>
+      fromLonLat([Number(longitude), Number(latitude)]),
     );
 
     const routeFeature = new Feature({
@@ -387,10 +445,10 @@ function MapView({
 
     routeSourceRef.current.addFeature(routeFeature);
 
-    const routeExtent =
-      routeFeature.getGeometry().getExtent();
+    const routeExtent = routeFeature.getGeometry().getExtent();
 
-    const isRouteExtentValid = routeExtent && routeExtent.every(coord => isFinite(coord));
+    const isRouteExtentValid =
+      routeExtent && routeExtent.every((coord) => isFinite(coord));
 
     if (isRouteExtentValid) {
       mapInstance.current.getView().fit(routeExtent, {
@@ -402,13 +460,35 @@ function MapView({
   }, [routeGeometry]);
 
   return (
-    <div
-      ref={mapRef}
-      style={{
-        width: '100%',
-        height: 'calc(100vh - 70px)',
-      }}
-    />
+    <>
+      {isSelectingStartPoint && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 90,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            background: '#2563EB',
+            color: '#fff',
+            padding: '10px 18px',
+            borderRadius: 10,
+            fontWeight: 600,
+            boxShadow: '0 8px 20px rgba(0,0,0,.15)',
+          }}
+        >
+          Başlangıç noktasını seçmek için haritaya tıklayın.
+        </div>
+      )}
+
+      <div
+        ref={mapRef}
+        style={{
+          width: '100%',
+          height: 'calc(100vh - 70px)',
+        }}
+      />
+    </>
   );
 }
 
