@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from 'primereact/button';
 import Navbar from '../components/Navbar';
 import MapView from '../components/MapView';
 import SearchBar from '../components/SearchBar';
@@ -7,28 +8,40 @@ import FilterButton from '../components/FilterButton';
 import LocationButton from '../components/LocationButton';
 import InfoCard from '../components/InfoCard';
 import FilterPanel from '../components/FilterPanel';
+import RoutePanel from '../components/RoutePanel';
 import NearestAreasPanel from '../components/NearestAreasPanel';
 import NearestAreasButton from '../components/NearestAreasButton';
-
-import RoutePanel from '../components/RoutePanel';
+import AdminLayout from '../components/AdminLayout';
+import AddAreaDialog from '../components/AddAreaDialog';
+import AreaListPage from './AreaListPage';
+import AnalyticsPage from './AnalyticsPage';
+import ActivityPage from './ActivityPage';
 import { getRoute } from '../api/route';
-import { getNearestAreas } from '../services/nearestAreaMockService';
-function Home() {
+import { fetchGatheringAreas } from '../api/toplanmaAlanlari';
+import { getNearestAreas } from '../services/nearestAreaService';
+
+function Home({ adminMode = false, areas = [] }) {
   const navigate = useNavigate();
-  const [areas, setAreas] = useState([]);
+  const [geoAreas, setGeoAreas] = useState(areas);
+  const [isLoadingAreas, setIsLoadingAreas] = useState(true);
+  const [areasError, setAreasError] = useState('');
+  const [searchText, setSearchText] = useState('');
   const [selectedArea, setSelectedArea] = useState(null);
   const [nearestAreas, setNearestAreas] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
+  const [startPoint, setStartPoint] = useState(null);
+  const [isSelectingStartPoint, setIsSelectingStartPoint] = useState(false);
   const [routeGeometry, setRouteGeometry] = useState(null);
-  const [routeInfo, setRouteInfo] = useState(null);
-  const [error, setError] = useState(null);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
-  const [searchText, setSearchText] = useState('');
+  const [travelMode, setTravelMode] = useState('walking');
+  const [routePanelOpen, setRoutePanelOpen] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showNearestPanel, setShowNearestPanel] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [showInfoCard, setShowInfoCard] = useState(false);
-  const [travelMode, setTravelMode] = useState('walking');
+  const [adminPage, setAdminPage] = useState('dashboard');
+  const [adminActivities, setAdminActivities] = useState([]);
+  const [addAreaDialogOpen, setAddAreaDialogOpen] = useState(false);
 
   const emptyFilters = {
     district: '',
@@ -39,124 +52,105 @@ function Home() {
   const [filters, setFilters] = useState(emptyFilters);
   const [tempFilters, setTempFilters] = useState(emptyFilters);
 
-  const activeFilterCount = Object.values(filters).filter(
-    (value) => value !== '',
-  ).length;
-
   useEffect(() => {
-    const fetchAreas = async () => {
-      try {
-        const response = await fetch(
-          'http://127.0.0.1:5000/api/geo/gathering-areas',
-        );
+    let cancelled = false;
+    setIsLoadingAreas(true);
+    setAreasError('');
 
-        if (!response.ok) {
-          throw new Error(`Veri çekilemedi: ${response.statusText}`);
+    fetchGatheringAreas()
+      .then((result) => {
+        if (!cancelled) setGeoAreas(result);
+      })
+      .catch((error) => {
+        console.error('GeoData yüklenemedi:', error);
+        if (!cancelled) {
+          setAreasError('GeoData yüklenemedi. Backend bağlantısını kontrol edin.');
         }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingAreas(false);
+      });
 
-        const geoJsonData = await response.json();
+    return () => {
+      cancelled = true;
+    };
+  }, [adminMode]);
 
-        if (!geoJsonData || !geoJsonData.features) {
-          throw new Error('Geçersiz GeoJSON veri yapısı.');
-        }
+  const visibleAreas = geoAreas;
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+  const areaTypes = [...new Set(geoAreas.map((area) => area.type).filter(Boolean))]
+    .sort((first, second) => first.localeCompare(second, 'tr'));
 
-        const mappedAreas = geoJsonData.features.map((feature) => {
-          let longitude = null;
-          let latitude = null;
-          const geom = feature.geometry;
+  const addActivity = (type, area) => {
+    setAdminActivities((current) => [{
+      id: `${Date.now()}-${Math.random()}`,
+      type,
+      area: { ...area },
+      createdAt: new Date().toISOString(),
+    }, ...current].slice(0, 50));
+  };
 
-          if (geom) {
-            if (geom.type === 'Point') {
-              longitude = geom.coordinates[0];
-              latitude = geom.coordinates[1];
-            } else if (geom.type === 'Polygon' && geom.coordinates[0]) {
-              const ring = geom.coordinates[0];
-              const sum = ring.reduce(
-                (acc, coord) => [acc[0] + coord[0], acc[1] + coord[1]],
-                [0, 0],
-              );
-              longitude = sum[0] / ring.length;
-              latitude = sum[1] / ring.length;
-            } else if (
-              geom.type === 'MultiPolygon' &&
-              geom.coordinates[0]?.[0]
-            ) {
-              const ring = geom.coordinates[0][0];
-              const sum = ring.reduce(
-                (acc, coord) => [acc[0] + coord[0], acc[1] + coord[1]],
-                [0, 0],
-              );
-              longitude = sum[0] / ring.length;
-              latitude = sum[1] / ring.length;
-            }
-          }
+  const showAreaOnAdminMap = (area) => {
+    setSelectedArea(area);
+    setShowInfoCard(true);
+    setRoutePanelOpen(false);
+    setRouteGeometry(null);
+    setAdminPage('dashboard');
+  };
 
-          const props = feature.properties || {};
-          return {
-            id: props.ID || props.OBJECTID || props.id || Math.random(),
-            name:
-              props.ADI ||
-              props.TOPLANMA_ALANI_ADI ||
-              props.name ||
-              'Toplanma Alanı',
-            district: props.ILCE_ADI || props.ILCE || props.district || '',
-            neighborhood:
-              props.MAHALLE_ADI || props.MAHALLE || props.neighborhood || '',
-            latitude: latitude !== null ? Number(latitude) : null,
-            longitude: longitude !== null ? Number(longitude) : null,
-            capacity: props.KAPASITE || props.KAPASITESI || 0,
-            availability: 'available',
-            type: props.TURU || 'Toplanma Alanı',
-          };
-        });
+  const handleDeleteArea = (area) => {
+    setGeoAreas((current) => current.filter(
+      (item) => item.recordKey !== area.recordKey,
+    ));
+    addActivity('deleted', area);
+  };
 
-        const cleanAreas = mappedAreas.filter(
-          (area) => area.latitude !== null && area.longitude !== null,
-        );
-        setAreas(cleanAreas);
-      } catch (err) {
-        console.error('Toplanma alanları yüklenirken hata:', err);
-        setError(err.message);
-      }
+  const handleUndoDelete = (activity) => {
+    setGeoAreas((current) => current.some(
+      (area) => area.recordKey === activity.area.recordKey,
+    ) ? current : [...current, activity.area]);
+    setAdminActivities((current) => current.map((item) =>
+      item.id === activity.id ? { ...item, undone: true } : item,
+    ));
+  };
+
+  const handleAddArea = (newArea) => {
+    const nextId = geoAreas.reduce(
+      (maximum, area) => Math.max(maximum, Number(area.id) || 0),
+      0,
+    ) + 1;
+    const savedArea = {
+      ...newArea,
+      recordKey: `admin-${Date.now()}-${nextId}`,
+      id: nextId,
+      poiId: null,
+      distance: 0,
+      walkingMinutes: 0,
+      slopeDegree: null,
+      slopePercent: null,
+      district: '',
+      neighborhood: '',
+      address: '',
+      availability: 'available',
     };
 
-    fetchAreas();
-  }, []);
+    setGeoAreas((current) => [...current, savedArea]);
+    addActivity('added', savedArea);
+    setAddAreaDialogOpen(false);
+    setAdminPage('list');
+  };
 
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-      },
-      (err) => console.warn('Kullanıcı konumu alınamadı.', err),
-      { enableHighAccuracy: true },
-    );
-  }, []);
-
-  // Filtering Logic
-  const filteredAreas = areas.filter((area) => {
-    const text = searchText.toLowerCase();
-
+  const filteredAreas = visibleAreas.filter((area) => {
+    const text = searchText.toLocaleLowerCase('tr-TR');
     const matchesSearch =
-      area.name.toLowerCase().includes(text) ||
-      area.district.toLowerCase().includes(text) ||
-      area.neighborhood.toLowerCase().includes(text);
-
-    const matchesDistrict =
-      !filters.district || area.district === filters.district;
-
-    const matchesNeighborhood =
-      !filters.neighborhood || area.neighborhood === filters.neighborhood;
-
+      area.name?.toLocaleLowerCase('tr-TR').includes(text) ||
+      area.district?.toLocaleLowerCase('tr-TR').includes(text) ||
+      area.neighborhood?.toLocaleLowerCase('tr-TR').includes(text);
+    const matchesDistrict = !filters.district || area.district === filters.district;
+    const matchesNeighborhood = !filters.neighborhood || area.neighborhood === filters.neighborhood;
     const matchesType = !filters.type || area.type === filters.type;
 
     let matchesCapacity = true;
-
     if (filters.capacity === '0-1000') {
       matchesCapacity = area.capacity <= 1000;
     } else if (filters.capacity === '1000-3000') {
@@ -165,58 +159,38 @@ function Home() {
       matchesCapacity = area.capacity > 3000;
     }
 
-    return (
-      matchesSearch &&
-      matchesDistrict &&
-      matchesNeighborhood &&
-      matchesType &&
-      matchesCapacity
-    );
+    return matchesSearch && matchesDistrict && matchesNeighborhood &&
+      matchesType && matchesCapacity;
   });
 
-  const handleGetLocation = async () => {
+  const handleUseCurrentLocation = ({ openNearestPanel = false } = {}) => {
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
+      (position) => {
         const location = {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         };
-
         setUserLocation(location);
+        setStartPoint({
+          ...location,
+          label: 'Mevcut konum',
+          description: 'Cihazınızdan alınan konum',
+        });
+        setIsSelectingStartPoint(false);
+        setRouteGeometry(null);
 
-        try {
-          const nearest = await getNearestAreas(
+        if (openNearestPanel) {
+          setNearestAreas(getNearestAreas(
+            visibleAreas,
             location.latitude,
             location.longitude,
-          );
-          setNearestAreas(nearest);
+          ));
           setShowNearestPanel(true);
-        } catch (err) {
-          console.error('En yakın alanlar getirilirken hata oluştu:', err);
         }
-        setStartPoint({
-          type: 'current-location',
-          label: 'Mevcut Konum',
-          description: `${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}`,
-          latitude: location.latitude,
-          longitude: location.longitude,
-        });
-
-        const nearest = await getNearestAreas(
-          location.latitude,
-          location.longitude,
-        );
-
-        setNearestAreas(nearest);
-
-        // EKLENECEK
-        setShowNearestPanel(true);
-
-        console.log('nearest:', nearest);
       },
-      (err) => {
-        alert('Konum alınamadı.');
-        console.error(err);
+      (error) => {
+        alert('Konum alınamadı. Tarayıcı konum iznini kontrol edin.');
+        console.error(error);
       },
       { enableHighAccuracy: true },
     );
@@ -224,68 +198,39 @@ function Home() {
 
   const handleSelectArea = (area) => {
     setSelectedArea(area);
-    if (area) {
-      setShowInfoCard(true);
-    } else {
-      setShowInfoCard(false);
-    }
+    setShowInfoCard(Boolean(area));
+    setRoutePanelOpen(false);
     setRouteGeometry(null);
-    setRouteInfo(null);
   };
 
-  const handleSelectStartPointFromMap = (coordinates) => {
-    if (!coordinates) return;
-
-    const { latitude, longitude } = coordinates;
-
+  const handleSelectStartPoint = ({ latitude, longitude }) => {
     setStartPoint({
-      type: 'map',
-      label: 'Haritadan Seçilen Konum',
-      description: `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
       latitude,
       longitude,
+      label: 'Haritadan seçilen nokta',
+      description: `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
     });
-
     setIsSelectingStartPoint(false);
-
-    // Daha önce çizilmiş bir rota varsa temizle
     setRouteGeometry(null);
-    setRouteInfo(null);
   };
 
   const handleCreateRoute = async () => {
-    if (!userLocation) {
-      alert('Rota oluşturmak için önce konumunuzu bulun.');
-      return;
-    }
-
-    if (!selectedArea) {
-      alert('Lütfen bir toplanma alanı seçin.');
-      return;
-    }
+    if (!startPoint || !selectedArea) return;
 
     try {
       setIsLoadingRoute(true);
-
       const routeResponse = await getRoute(
-        userLocation.latitude,
-        userLocation.longitude,
+        startPoint.latitude,
+        startPoint.longitude,
         selectedArea.latitude,
         selectedArea.longitude,
       );
-
       const firstRoute = routeResponse?.routes?.[0];
-
       if (!firstRoute?.geometry?.coordinates?.length) {
         throw new Error('Backend geçerli bir rota döndürmedi.');
       }
-
       setRouteGeometry(firstRoute.geometry);
-
-      setRouteInfo({
-        distance: firstRoute.distance,
-        duration: firstRoute.duration,
-      });
+      setRoutePanelOpen(false);
     } catch (error) {
       console.error('Rota oluşturulamadı:', error);
       alert('Rota oluşturulamadı. Lütfen tekrar deneyin.');
@@ -294,112 +239,152 @@ function Home() {
     }
   };
 
-  if (error) {
+  const mapContent = (
+    <div style={{
+      position: 'relative',
+      height: adminMode ? '100%' : 'auto',
+      minHeight: adminMode ? 0 : undefined,
+    }}>
+      <MapView
+        areas={filteredAreas}
+        selectedArea={selectedArea}
+        onSelectArea={handleSelectArea}
+        userLocation={userLocation}
+        startPoint={startPoint}
+        isSelectingStartPoint={isSelectingStartPoint}
+        onSelectStartPoint={handleSelectStartPoint}
+        routeGeometry={routeGeometry}
+        height={adminMode ? '100%' : 'calc(100vh - 76px)'}
+      />
+
+      {showNearestPanel && (
+        <NearestAreasPanel
+          nearestAreas={nearestAreas}
+          selectedArea={selectedArea}
+          onSelectArea={handleSelectArea}
+          onClose={() => setShowNearestPanel(false)}
+        />
+      )}
+
+      <SearchBar
+        searchText={searchText}
+        setSearchText={setSearchText}
+        filteredAreas={filteredAreas}
+        onSelectArea={handleSelectArea}
+        showSuggestions={showSuggestions}
+        setShowSuggestions={setShowSuggestions}
+      />
+      <NearestAreasButton
+        open={showNearestPanel}
+        disabled={!userLocation}
+        onClick={() => setShowNearestPanel(!showNearestPanel)}
+      />
+      <FilterButton
+        open={filterOpen}
+        activeCount={activeFilterCount}
+        onClick={() => setFilterOpen(!filterOpen)}
+      />
+      <FilterPanel
+        open={filterOpen}
+        areas={visibleAreas}
+        filters={tempFilters}
+        setFilters={setTempFilters}
+        onApply={() => {
+          setFilters(tempFilters);
+          setFilterOpen(false);
+        }}
+        onClear={() => {
+          setTempFilters(emptyFilters);
+          setFilters(emptyFilters);
+        }}
+      />
+      <LocationButton onClick={() => handleUseCurrentLocation({ openNearestPanel: true })} />
+
+      {showInfoCard && selectedArea && (
+        <InfoCard
+          selectedArea={selectedArea}
+          onOpenRoutePanel={() => {
+            setShowInfoCard(false);
+            setRoutePanelOpen(true);
+          }}
+          onClose={() => setShowInfoCard(false)}
+        />
+      )}
+
+      <RoutePanel
+        open={routePanelOpen}
+        selectedArea={selectedArea}
+        travelMode={travelMode}
+        onTravelModeChange={setTravelMode}
+        startPoint={startPoint}
+        onUseCurrentLocation={() => handleUseCurrentLocation()}
+        onSelectFromMap={() => setIsSelectingStartPoint(true)}
+        onSearchAddress={() => alert('Adres arama özelliği henüz kullanıma hazır değil.')}
+        onCreateRoute={handleCreateRoute}
+        isLoadingRoute={isLoadingRoute}
+        onClose={() => {
+          setRoutePanelOpen(false);
+          setIsSelectingStartPoint(false);
+        }}
+      />
+    </div>
+  );
+
+  if (adminMode) {
     return (
-      <div
-        style={{ padding: '24px', fontFamily: 'sans-serif', color: '#DC2626' }}
+      <AdminLayout
+        activePage={adminPage}
+        pageTitle={
+          adminPage === 'list'
+            ? 'Toplanma Alanı Listesi'
+            : adminPage === 'stats'
+              ? 'Analizler & İstatistikler'
+              : adminPage === 'activity'
+                ? 'Son İşlemler'
+                : 'Yönetici Paneli'
+        }
+        onNavigate={setAdminPage}
+        headerAction={adminPage === 'list' ? (
+          <Button
+            className="alp-add-button"
+            label="Yeni Toplanma Alanı"
+            icon="pi pi-plus"
+            onClick={() => setAddAreaDialogOpen(true)}
+          />
+        ) : null}
+        onLogout={() => {
+          localStorage.removeItem('adminUser');
+          navigate('/', { replace: true });
+        }}
       >
-        <h3>Harita yüklenirken hata oluştu:</h3>
-        <p>{error}</p>
-      </div>
+        {isLoadingAreas
+          ? <p>GeoData yükleniyor...</p>
+          : areasError
+            ? <p role="alert">{areasError}</p>
+            : adminPage === 'list'
+              ? <AreaListPage areas={geoAreas} setAreas={setGeoAreas} onActivity={addActivity} onShowOnMap={showAreaOnAdminMap} onDelete={handleDeleteArea} />
+              : adminPage === 'stats'
+                ? <AnalyticsPage areas={geoAreas} />
+                : adminPage === 'activity'
+                  ? <ActivityPage activities={adminActivities} onShowOnMap={showAreaOnAdminMap} onUndoDelete={handleUndoDelete} />
+                  : mapContent}
+        <AddAreaDialog
+          visible={addAreaDialogOpen}
+          areaTypes={areaTypes}
+          onHide={() => setAddAreaDialogOpen(false)}
+          onSave={handleAddArea}
+        />
+      </AdminLayout>
     );
   }
+
+  if (isLoadingAreas) return <><Navbar /><p>GeoData yükleniyor...</p></>;
+  if (areasError) return <><Navbar /><p role="alert">{areasError}</p></>;
 
   return (
     <>
       <Navbar onNavigate={() => navigate('/login')} />
-
-      <div style={{ position: 'relative', height: 'calc(100vh - 60px)' }}>
-        <MapView
-          areas={filteredAreas}
-          selectedArea={selectedArea}
-          onSelectArea={handleSelectArea}
-          userLocation={userLocation}
-          routeGeometry={routeGeometry}
-          isSelectingStartPoint={isSelectingStartPoint}
-          startPoint={startPoint}
-          onSelectStartPoint={handleSelectStartPointFromMap}
-        />
-
-        {showNearestPanel && (
-          <NearestAreasPanel
-            nearestAreas={nearestAreas}
-            selectedArea={selectedArea}
-            onSelectArea={handleSelectArea}
-            onClose={() => setShowNearestPanel(false)}
-          />
-        )}
-
-        <SearchBar
-          searchText={searchText}
-          setSearchText={setSearchText}
-          filteredAreas={filteredAreas}
-          onSelectArea={handleSelectArea}
-          showSuggestions={showSuggestions}
-          setShowSuggestions={setShowSuggestions}
-        />
-
-        <NearestAreasButton
-          open={showNearestPanel}
-          disabled={!userLocation}
-          onClick={() => setShowNearestPanel(!showNearestPanel)}
-        />
-
-        <FilterButton
-          open={filterOpen}
-          activeCount={activeFilterCount}
-          onClick={() => setFilterOpen(!filterOpen)}
-        />
-        <RoutePanel
-          open={routePanelOpen}
-          selectedArea={selectedArea}
-          travelMode={travelMode}
-          startPoint={startPoint}
-          onTravelModeChange={setTravelMode}
-          onClose={() => {
-            setRoutePanelOpen(false);
-            setIsSelectingStartPoint(false);
-
-            if (selectedArea) {
-              setShowInfoCard(true);
-            }
-          }}
-          onUseCurrentLocation={handleGetLocation}
-          onSelectFromMap={() => {
-            setIsSelectingStartPoint(true);
-          }}
-          onSearchAddress={() => {
-            console.log('Adres ara');
-          }}
-        />
-        <FilterPanel
-          open={filterOpen}
-          areas={areas}
-          filters={tempFilters}
-          setFilters={setTempFilters}
-          onApply={() => {
-            setFilters(tempFilters);
-            setFilterOpen(false);
-          }}
-          onClear={() => {
-            setTempFilters(emptyFilters);
-            setFilters(emptyFilters);
-          }}
-        />
-
-        <LocationButton onClick={handleGetLocation} />
-
-        {showInfoCard && selectedArea && (
-          <InfoCard
-            selectedArea={selectedArea}
-            onOpenRoutePanel={() => {
-              setShowInfoCard(false);
-              setRoutePanelOpen(true);
-            }}
-            onClose={() => setShowInfoCard(false)}
-          />
-        )}
-      </div>
+      {mapContent}
     </>
   );
 }

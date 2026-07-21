@@ -26,10 +26,11 @@ function MapView({
   selectedArea,
   onSelectArea,
   userLocation,
-  routeGeometry,
-  isSelectingStartPoint,
   startPoint,
+  isSelectingStartPoint = false,
   onSelectStartPoint,
+  routeGeometry,
+  height = 'calc(100vh - 76px)',
 }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
@@ -134,7 +135,7 @@ function MapView({
 
       if (!area) return;
 
-      const isSelected = selectedArea?.id === area.id;
+      const isSelected = (selectedArea?.recordKey || selectedArea?.id) === (area.recordKey || area.id);
 
       const markerColor = isSelected
         ? COLORS.primary
@@ -233,18 +234,11 @@ function MapView({
   const handleMapClick = (event) => {
     if (!mapInstance.current) return;
 
-    const areaFeature = mapInstance.current.forEachFeatureAtPixel(
-      event.pixel,
-      (feature) => {
-        const area = feature.get('areaData');
-        return area ? feature : undefined;
-      },
-    );
     // Başlangıç noktası seçme modu
     if (isSelectingStartPoint) {
       const [longitude, latitude] = toLonLat(event.coordinate);
 
-      onSelectStartPoint({
+      onSelectStartPoint?.({
         latitude,
         longitude,
       });
@@ -264,11 +258,11 @@ function MapView({
     const area = areaFeature?.get('areaData');
 
     if (area) {
-      onSelectArea(area);
+      onSelectArea?.(area);
       return;
     }
 
-    onSelectArea(null);
+    onSelectArea?.(null);
   };
 
   useEffect(() => {
@@ -324,7 +318,7 @@ function MapView({
     updateMarkerStyles();
 
     const currentAreasKey = areas
-      .map((area) => area?.id || '')
+      .map((area) => area?.recordKey || area?.id || '')
       .sort((a, b) => String(a).localeCompare(String(b)))
       .join(',');
 
@@ -460,35 +454,13 @@ function MapView({
   }, [routeGeometry]);
 
   return (
-    <>
-      {isSelectingStartPoint && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 90,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 1000,
-            background: '#2563EB',
-            color: '#fff',
-            padding: '10px 18px',
-            borderRadius: 10,
-            fontWeight: 600,
-            boxShadow: '0 8px 20px rgba(0,0,0,.15)',
-          }}
-        >
-          Başlangıç noktasını seçmek için haritaya tıklayın.
-        </div>
-      )}
-
-      <div
-        ref={mapRef}
-        style={{
-          width: '100%',
-          height: 'calc(100vh - 70px)',
-        }}
-      />
-    </>
+    <div
+      ref={mapRef}
+      style={{
+        width: '100%',
+        height,
+      }}
+    />
   );
 }
 

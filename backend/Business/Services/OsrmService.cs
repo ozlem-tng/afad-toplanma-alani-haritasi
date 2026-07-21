@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace backend.Services;
+namespace backend.Business.Services;
 
 public class OsrmService
 {
@@ -9,7 +9,6 @@ public class OsrmService
     public OsrmService(HttpClient httpClient)
     {
         _httpClient = httpClient;
-
     }
 
     public async Task<string> GetRouteAsync(
@@ -19,16 +18,13 @@ public class OsrmService
         double endLongitude)
     {
         var url =
-     $"http://router.project-osrm.org/route/v1/driving/" +
-     $"{startLongitude.ToString(CultureInfo.InvariantCulture)},{startLatitude.ToString(CultureInfo.InvariantCulture)};" +
-     $"{endLongitude.ToString(CultureInfo.InvariantCulture)},{endLatitude.ToString(CultureInfo.InvariantCulture)}" +
-     "?overview=full&geometries=geojson";
-        Console.WriteLine(url);
+            "http://router.project-osrm.org/route/v1/driving/" +
+            $"{startLongitude.ToString(CultureInfo.InvariantCulture)},{startLatitude.ToString(CultureInfo.InvariantCulture)};" +
+            $"{endLongitude.ToString(CultureInfo.InvariantCulture)},{endLatitude.ToString(CultureInfo.InvariantCulture)}" +
+            "?overview=full&geometries=geojson";
 
         var response = await _httpClient.GetAsync(url);
-
         response.EnsureSuccessStatusCode();
-
 
         return await response.Content.ReadAsStringAsync();
     }

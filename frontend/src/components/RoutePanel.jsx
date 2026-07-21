@@ -27,6 +27,8 @@ function RoutePanel({
   onUseCurrentLocation,
   onSelectFromMap,
   onSearchAddress,
+  onCreateRoute,
+  isLoadingRoute = false,
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -204,7 +206,8 @@ function RoutePanel({
         <button
           type="button"
           className="route-panel__create-button"
-          disabled={!startPoint || !selectedArea}
+          onClick={onCreateRoute}
+          disabled={!startPoint || !selectedArea || isLoadingRoute}
         >
           {' '}
           Rota Oluştur

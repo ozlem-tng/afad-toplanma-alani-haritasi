@@ -83,18 +83,18 @@ function InfoCard({ selectedArea, onClose, onOpenRoutePanel }) {
             icon={
               <LocationOnIcon sx={{ color: COLORS.primary, fontSize: 20 }} />
             }
-            title="İlçe"
-            value={selectedArea.district}
+            title={selectedArea.district ? 'İlçe' : 'Alan türü'}
+            value={selectedArea.district || selectedArea.type}
           />
           <InfoRow
             icon={<HomeWorkIcon sx={{ color: COLORS.primary, fontSize: 20 }} />}
-            title="Mahalle"
-            value={selectedArea.neighborhood}
+            title={selectedArea.neighborhood ? 'Mahalle' : 'Yüzölçümü'}
+            value={selectedArea.neighborhood || `${Number(selectedArea.areaSize || 0).toLocaleString('tr-TR')} m²`}
           />
           <InfoRow
             icon={<PlaceIcon sx={{ color: COLORS.primary, fontSize: 20 }} />}
-            title="Adres"
-            value={selectedArea.address}
+            title={selectedArea.address ? 'Adres' : 'POI ID'}
+            value={selectedArea.address || selectedArea.poiId || 'Belirtilmemiş'}
           />
           <InfoRow
             icon={<GroupsIcon sx={{ color: COLORS.primary, fontSize: 20 }} />}

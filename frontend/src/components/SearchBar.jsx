@@ -99,7 +99,7 @@ function SearchBar({
           >
             {filteredAreas.slice(0, 6).map((area, index) => (
               <div
-                key={area.id}
+                key={area.recordKey || area.id}
                 onClick={() => {
                   onSelectArea(area);
                   setSearchText(area.name);
@@ -140,7 +140,9 @@ function SearchBar({
                     fontSize: 12,
                   }}
                 >
-                  {area.neighborhood} / {area.district}
+                  {area.district || area.neighborhood
+                    ? [area.neighborhood, area.district].filter(Boolean).join(' / ')
+                    : `${area.type} · ${Number(area.capacity || 0).toLocaleString('tr-TR')} kişi`}
                 </p>
               </div>
             ))}

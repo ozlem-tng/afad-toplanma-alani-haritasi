@@ -1,8 +1,9 @@
 import "../styles/Navbar.css";
 import logo from "../assets/logo.png";
-import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
+import { Link } from "react-router-dom";
 
-function Navbar({ onNavigate }) {
+function Navbar() {
   return (
     <nav className="navbar">
       <div className="logo-container">
@@ -18,14 +19,15 @@ function Navbar({ onNavigate }) {
         </div>
       </div>
 
-      <button
-        type="button"
-        className="admin-btn"
-        onClick={onNavigate}
+      <Link
+        to="/admin"
+        className="admin-entry-icon"
+        aria-label="Yönetici girişini aç"
+        title="Yönetici Girişi"
       >
-        <AdminPanelSettingsIcon fontSize="small" />
-        Yönetici Girişi
-      </button>
+        <AdminPanelSettingsRoundedIcon className="admin-entry-symbol" />
+      </Link>
+
     </nav>
   );
 }

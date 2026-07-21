@@ -45,7 +45,7 @@ function NearestAreasPanel({
 
           return (
             <div
-              key={area.id}
+              key={area.recordKey || area.id}
               className={`nearest-card ${
                 isSelected ? 'nearest-card-active' : ''
               }`}

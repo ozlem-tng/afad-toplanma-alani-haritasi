@@ -1,0 +1,29 @@
+.act-page { height: 100%; box-sizing: border-box; overflow: auto; padding: 24px; background: #f6f8fb; }
+.act-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.act-header h2 { margin: 0; color: #153963; font-size: 22px; }
+.act-header p { margin: 6px 0 0; color: #6b778b; font-size: 13px; }
+.act-header > span { padding: 8px 13px; border: 1px solid #d9e5f1; border-radius: 999px; background: #fff; color: #315d88; font-size: 12px; font-weight: 700; }
+.act-list { display: grid; gap: 10px; }
+.act-item { display: grid; grid-template-columns: 42px minmax(220px, 1fr) auto auto; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid #e1e7ef; border-radius: 13px; background: #fff; box-shadow: 0 4px 14px rgba(35, 57, 87, .04); }
+.act-icon { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 11px; }
+.act-icon.added { background: #e8f7ed; color: #249149; }
+.act-icon.updated { background: #eaf3fc; color: #3478b9; }
+.act-icon.deleted { background: #fff0f1; color: #d84a55; }
+.act-copy div { display: flex; align-items: center; gap: 9px; }
+.act-copy strong { color: #1c2d45; font-size: 14px; }
+.act-copy p { margin: 5px 0 0; color: #78869a; font-size: 12px; }
+.act-badge { padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 800; }
+.act-badge.added { background: #e8f7ed; color: #247c42; }
+.act-badge.updated { background: #eaf3fc; color: #316fa9; }
+.act-badge.deleted { background: #fff0f1; color: #bf3f49; }
+.act-badge.undone { background: #edf7ff; color: #276795; }
+.act-item time { color: #8490a2; font-size: 11px; white-space: nowrap; }
+.act-item button { display: inline-flex; align-items: center; gap: 6px; padding: 8px 11px; border: 1px solid #cddceb; border-radius: 8px; background: #fff; color: #255d91; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+.act-item button:hover { background: #edf5fc; }
+.act-item .act-undo-button { border-color: #f0c8cb; background: #fff5f5; color: #bd3540; }
+.act-item .act-undo-button:hover { background: #ffe9eb; }
+.act-empty { display: grid; min-height: 300px; place-content: center; justify-items: center; gap: 8px; border: 1px dashed #cad5e3; border-radius: 16px; background: #fff; color: #8490a2; text-align: center; }
+.act-empty i { margin-bottom: 6px; color: #9aabc0; font-size: 34px; }
+.act-empty strong { color: #40516a; }
+.act-empty span { font-size: 12px; }
+@media (max-width: 900px) { .act-item { grid-template-columns: 42px 1fr; } .act-item time, .act-item button { grid-column: 2; justify-self: start; } }

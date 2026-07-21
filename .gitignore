@@ -1,5 +1,35 @@
+############################
+# Visual Studio
+############################
+.vs/
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+############################
+# .NET
+############################
+bin/
+obj/
+**/bin/
+**/obj/
+
+############################
+# Build
+############################
+Debug/
+Release/
+publish/
+artifacts/
+
+############################
 # Logs
-logs
+############################
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,19 +37,73 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+############################
+# Node
+############################
+node_modules/
+npm-cache/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+############################
+# React / Vite
+############################
+dist/
+dist-ssr/
+coverage/
+*.local
+.env
+.env.*
+!.env.example
+
+############################
+# OS
+############################
 .DS_Store
-*.suo
-.ntvs
-*.njsproj
-*.sln
-*.sw?
-.
+Thumbs.db
+Desktop.ini
+
+############################
+# Temporary
+############################
+tmp/
+temp/
+*.tmp
+*.cache
+
+############################
+# GeoData (Build Output)
+############################
+backend/bin/Debug/net9.0/GeoData/
+backend/bin/Release/net9.0/GeoData/
+
+############################
+# Rider
+############################
+.idea/
+
+############################
+# Visual Studio Code
+############################
+.history/
+
+############################
+# Generated files
+############################
+*.dll
+*.exe
+*.pdb
+*.cache
+*.deps.json
+*.runtimeconfig.json
+
+############################
+# NuGet
+############################
+packages/
+*.nupkg
+
+############################
+# Others
+############################
+*.swp
+*.bak
+*.orig

@@ -53,8 +53,15 @@ export default function LoginPage() {
         
         try {
             const data = await authService.login(email, password);
-            localStorage.setItem('token', data.token);
-            setSuccess("Giriş başarılı! Yönlendiriliyorsunuz...");
+            const adminUser = data?.data;
+
+            if (!adminUser) {
+                throw new Error('Sunucudan kullanıcı bilgisi alınamadı.');
+            }
+
+            localStorage.setItem('adminUser', JSON.stringify(adminUser));
+            setSuccess("Giriş başarılı! Yönetici paneline yönlendiriliyorsunuz...");
+            navigate('/admin', { replace: true });
         } catch (error) {
             if (error.response?.status == 423){
                 setError(error.response.data.message);
@@ -84,7 +91,7 @@ export default function LoginPage() {
 
     try {
         // 2. Pass all required properties to the authentication service method
-        const data = await authService.register(name, email, password, registrationNumber);
+        await authService.register(name, email, password, registrationNumber);
         setSuccess("Kaydınız başarıyla gerçekleştirilmiştir! Giriş sayfasına yönlendiriliyorsunuz...");
         
         setTimeout(() => {

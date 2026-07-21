@@ -1,7 +1,7 @@
 import { COLORS } from "../styles/colors";
 
 function FilterPanel({ open, areas, filters, setFilters, onApply, onClear }) {
-  const districts = [...new Set(areas.map((area) => area.district))].sort(
+  const districts = [...new Set(areas.map((area) => area.district).filter(Boolean))].sort(
     (a, b) => a.localeCompare(b, 'tr'),
   );
 
@@ -11,11 +11,12 @@ function FilterPanel({ open, areas, filters, setFilters, onApply, onClear }) {
         .filter((area) =>
           filters.district ? area.district === filters.district : true,
         )
-        .map((area) => area.neighborhood),
+        .map((area) => area.neighborhood)
+        .filter(Boolean),
     ),
   ].sort((a, b) => a.localeCompare(b, 'tr'));
 
-  const types = [...new Set(areas.map((area) => area.type))].sort((a, b) =>
+  const types = [...new Set(areas.map((area) => area.type).filter(Boolean))].sort((a, b) =>
     a.localeCompare(b, 'tr'),
   );
 
@@ -25,17 +26,6 @@ function FilterPanel({ open, areas, filters, setFilters, onApply, onClear }) {
       [field]: value,
       ...(field === 'district' ? { neighborhood: '' } : {}),
     }));
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      district: '',
-      neighborhood: '',
-      type: '',
-      capacity: '',
-    });
-    setFilters(emptyFilters);
-    onApply?.(emptyFilters);
   };
 
   const selectStyle = {
