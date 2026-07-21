@@ -1,28 +1,41 @@
 using Microsoft.EntityFrameworkCore;
 using backend.Data;
-using backend.Services;
+using backend.Data.Seeders;
+using backend.Business.Interfaces;
+using backend.Business.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+// 1. Controllers & JSON Options
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+    });
+
+// 2. Swagger / API Explorer Setup
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddScoped<IEmailService, EmailService>();
+// 3. HTTP Clients & Service Registrations
 builder.Services.AddHttpClient<OsrmService>();
-builder.Services.AddScoped<GeoDataServices>();
 
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IToplanmaAlaniService, ToplanmaAlaniService>();
+
+// 4. DbContext Configuration
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
-        "Host=127.0.0.1;Database=afad_toplanma_alani_haritasi;Username=postgres;Password=Bhjd1903..",
-        x => x.UseNetTopologySuite()
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions => npgsqlOptions.UseNetTopologySuite()
     ));
 
+// 5. CORS Configuration
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:5173") 
+        policy.WithOrigins("http://localhost:5173")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -30,78 +43,45 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Helper function to locate the geojson file reliably
-string GetGeoJsonFilePath()
-{
-    var path1 = Path.Combine(AppContext.BaseDirectory, "GeoData", "TOPLANMAALANLARI_recent.geojson");
-    if (File.Exists(path1)) return path1;
-
-    var path2 = Path.Combine(Directory.GetCurrentDirectory(), "GeoData", "TOPLANMAALANLARI_recent.geojson");
-    if (File.Exists(path2)) return path2;
-
-    return string.Empty;
-}
-
+// 6. Database Migrations & Data Seeding
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<AppDbContext>();
-        var geoService = services.GetRequiredService<GeoDataServices>();
 
         Console.WriteLine("Applying pending migrations...");
         await context.Database.MigrateAsync();
 
-        var geoJsonPath = GetGeoJsonFilePath();
-        if (string.IsNullOrEmpty(geoJsonPath))
+        // ToplanmaAlani Entity Seeder
+        var insertedCount = await ToplanmaAlaniSeeder.SeedAsync(context, app.Environment);
+        if (insertedCount > 0)
         {
-            Console.WriteLine($"[ERROR] Could not find 'TOPLANMAALANLARI_recent.geojson' in BaseDirectory ({AppContext.BaseDirectory}) or CurrentDirectory ({Directory.GetCurrentDirectory()}).");
+            Console.WriteLine($"{insertedCount} toplanma alanı PostgreSQL'e eklendi.");
         }
-        else
-        {
-            Console.WriteLine($"Clearing old places data and re-seeding from: {geoJsonPath}");
-            await context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE places RESTART IDENTITY CASCADE;");
-            await geoService.SeedGeoJsonDataAsync(geoJsonPath);
-            Console.WriteLine("Database seeding execution finished successfully!");
-        }
+
+        Console.WriteLine("Database check and seeding execution finished.");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"[CRITICAL ERROR] An error occurred during startup/seeding: {ex.Message}");
-        Console.WriteLine(ex.StackTrace);
+        Console.WriteLine($"An error occurred during database startup/seeding: {ex.Message}");
     }
 }
 
+// 7. Middleware Pipeline
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage(); 
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1"));
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
+        //c.RoutePrefix = string.Empty;
+    });
 }
 
-// Manual route to force-trigger seeding and view errors directly in browser/Swagger
-app.MapGet("/seed-data", async (AppDbContext context, GeoDataServices geoService) =>
-{
-    try
-    {
-        var geoJsonPath = GetGeoJsonFilePath();
-        if (string.IsNullOrEmpty(geoJsonPath))
-        {
-            return Results.BadRequest($"File not found. BaseDirectory: {AppContext.BaseDirectory}, CurrentDirectory: {Directory.GetCurrentDirectory()}");
-        }
-
-        await context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE places RESTART IDENTITY CASCADE;");
-        await geoService.SeedGeoJsonDataAsync(geoJsonPath);
-        return Results.Ok($"Seeding successful from path: {geoJsonPath}");
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem($"Seeding failed with exception: {ex.Message} | StackTrace: {ex.StackTrace}");
-    }
-});
-
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 app.UseCors("AllowReactApp");
 app.UseAuthorization();
 app.MapControllers();
