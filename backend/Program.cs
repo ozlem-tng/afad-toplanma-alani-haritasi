@@ -4,6 +4,10 @@ using backend.Data;
 using System.Net.Quic;
 using backend.Services;
 using System.Text.Json;
+using backend.Repositories;
+using backend.Repositories.Interfaces;
+using backend.Services.Interfaces;
+using backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +23,9 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseInMemoryDatabase("XYDataDb"));
+builder.Services.AddScoped<IGatheringAreaRepository, GatheringAreaRepository>();
+
+builder.Services.AddScoped<IGatheringAreaService, GatheringAreaService>();
 
 builder.Services.AddCors(options =>
 {
