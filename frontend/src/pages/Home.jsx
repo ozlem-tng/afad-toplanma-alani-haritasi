@@ -12,7 +12,8 @@ import NearestAreasButton from '../components/NearestAreasButton';
 
 import RoutePanel from '../components/RoutePanel';
 import { getRoute } from '../api/route';
-import { getNearestAreas } from '../services/nearestAreaMockService';
+import { getGatheringAreas } from '../api/gatheringAreaService';
+
 function Home() {
   const navigate = useNavigate();
   const [areas, setAreas] = useState([]);
@@ -30,6 +31,11 @@ function Home() {
   const [showInfoCard, setShowInfoCard] = useState(false);
   const [travelMode, setTravelMode] = useState('walking');
 
+  const [routePanelOpen, setRoutePanelOpen] = useState(false);
+
+  const [isSelectingStartPoint, setIsSelectingStartPoint] = useState(false);
+
+  const [startPoint, setStartPoint] = useState(null);
   const emptyFilters = {
     district: '',
     neighborhood: '',
@@ -46,74 +52,21 @@ function Home() {
   useEffect(() => {
     const fetchAreas = async () => {
       try {
-        const response = await fetch(
-          'http://127.0.0.1:5000/api/geo/gathering-areas',
-        );
+        const areas = await getGatheringAreas();
 
-        if (!response.ok) {
-          throw new Error(`Veri çekilemedi: ${response.statusText}`);
-        }
+        const mappedAreas = areas.map((area) => ({
+          id: area.id,
+          name: area.name,
+          district: area.ilceAdi || '',
+          neighborhood: area.mahalleAdi || '',
+          latitude: area.latitude,
+          longitude: area.longitude,
+          capacity: area.kapasite,
+          availability: 'available',
+          type: area.alanTur,
+        }));
 
-        const geoJsonData = await response.json();
-
-        if (!geoJsonData || !geoJsonData.features) {
-          throw new Error('Geçersiz GeoJSON veri yapısı.');
-        }
-
-        const mappedAreas = geoJsonData.features.map((feature) => {
-          let longitude = null;
-          let latitude = null;
-          const geom = feature.geometry;
-
-          if (geom) {
-            if (geom.type === 'Point') {
-              longitude = geom.coordinates[0];
-              latitude = geom.coordinates[1];
-            } else if (geom.type === 'Polygon' && geom.coordinates[0]) {
-              const ring = geom.coordinates[0];
-              const sum = ring.reduce(
-                (acc, coord) => [acc[0] + coord[0], acc[1] + coord[1]],
-                [0, 0],
-              );
-              longitude = sum[0] / ring.length;
-              latitude = sum[1] / ring.length;
-            } else if (
-              geom.type === 'MultiPolygon' &&
-              geom.coordinates[0]?.[0]
-            ) {
-              const ring = geom.coordinates[0][0];
-              const sum = ring.reduce(
-                (acc, coord) => [acc[0] + coord[0], acc[1] + coord[1]],
-                [0, 0],
-              );
-              longitude = sum[0] / ring.length;
-              latitude = sum[1] / ring.length;
-            }
-          }
-
-          const props = feature.properties || {};
-          return {
-            id: props.ID || props.OBJECTID || props.id || Math.random(),
-            name:
-              props.ADI ||
-              props.TOPLANMA_ALANI_ADI ||
-              props.name ||
-              'Toplanma Alanı',
-            district: props.ILCE_ADI || props.ILCE || props.district || '',
-            neighborhood:
-              props.MAHALLE_ADI || props.MAHALLE || props.neighborhood || '',
-            latitude: latitude !== null ? Number(latitude) : null,
-            longitude: longitude !== null ? Number(longitude) : null,
-            capacity: props.KAPASITE || props.KAPASITESI || 0,
-            availability: 'available',
-            type: props.TURU || 'Toplanma Alanı',
-          };
-        });
-
-        const cleanAreas = mappedAreas.filter(
-          (area) => area.latitude !== null && area.longitude !== null,
-        );
-        setAreas(cleanAreas);
+        setAreas(mappedAreas);
       } catch (err) {
         console.error('Toplanma alanları yüklenirken hata:', err);
         setError(err.message);
@@ -121,21 +74,6 @@ function Home() {
     };
 
     fetchAreas();
-  }, []);
-
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-      },
-      (err) => console.warn('Kullanıcı konumu alınamadı.', err),
-      { enableHighAccuracy: true },
-    );
   }, []);
 
   // Filtering Logic
@@ -174,6 +112,39 @@ function Home() {
     );
   });
 
+  const calculateNearestAreas = (latitude, longitude) => {
+    return [...areas]
+      .map((area) => {
+        const distance = getDistance(
+          latitude,
+          longitude,
+          area.latitude,
+          area.longitude,
+        );
+
+        return {
+          ...area,
+          distance: distance * 1000,
+        };
+      })
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 3);
+  };
+
+  const getDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) ** 2;
+
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
   const handleGetLocation = async () => {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -185,15 +156,19 @@ function Home() {
         setUserLocation(location);
 
         try {
-          const nearest = await getNearestAreas(
+          const nearest = calculateNearestAreas(
             location.latitude,
             location.longitude,
           );
+
           setNearestAreas(nearest);
           setShowNearestPanel(true);
+
+          console.log('nearest:', nearest);
         } catch (err) {
           console.error('En yakın alanlar getirilirken hata oluştu:', err);
         }
+
         setStartPoint({
           type: 'current-location',
           label: 'Mevcut Konum',
@@ -201,18 +176,6 @@ function Home() {
           latitude: location.latitude,
           longitude: location.longitude,
         });
-
-        const nearest = await getNearestAreas(
-          location.latitude,
-          location.longitude,
-        );
-
-        setNearestAreas(nearest);
-
-        // EKLENECEK
-        setShowNearestPanel(true);
-
-        console.log('nearest:', nearest);
       },
       (err) => {
         alert('Konum alınamadı.');
@@ -221,7 +184,6 @@ function Home() {
       { enableHighAccuracy: true },
     );
   };
-
   const handleSelectArea = (area) => {
     setSelectedArea(area);
     if (area) {

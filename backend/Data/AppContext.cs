@@ -1,6 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using backend.Models;
-using backend.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Data;
 
@@ -13,5 +12,5 @@ public class AppDbContext : DbContext
 
     public DbSet<User> Users { get; set; }
 
-    public DbSet<GatheringArea> GatheringAreas { get; set; }
+    public DbSet<ToplanmaAlani> ToplanmaAlanlari { get; set; }
 }

@@ -233,13 +233,7 @@ function MapView({
   const handleMapClick = (event) => {
     if (!mapInstance.current) return;
 
-    const areaFeature = mapInstance.current.forEachFeatureAtPixel(
-      event.pixel,
-      (feature) => {
-        const area = feature.get('areaData');
-        return area ? feature : undefined;
-      },
-    );
+  
     // Başlangıç noktası seçme modu
     if (isSelectingStartPoint) {
       const [longitude, latitude] = toLonLat(event.coordinate);
@@ -256,7 +250,6 @@ function MapView({
       event.pixel,
       (feature) => {
         const area = feature.get('areaData');
-
         return area ? feature : undefined;
       },
     );

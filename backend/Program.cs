@@ -1,13 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore;
 using backend.Data;
-using System.Net.Quic;
-using backend.Services;
-using System.Text.Json;
-using backend.Repositories;
-using backend.Repositories.Interfaces;
-using backend.Services.Interfaces;
-using backend.Services;
+using backend.Data.Seeders;
+using backend.Business.Interfaces;
+using backend.Business.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,13 +17,17 @@ builder.Services.AddControllers()
 builder.Services.AddHttpClient<OsrmService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<
+    IToplanmaAlaniService,
+    ToplanmaAlaniService
+>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseInMemoryDatabase("XYDataDb"));
-builder.Services.AddScoped<IGatheringAreaRepository, GatheringAreaRepository>();
-
-builder.Services.AddScoped<IGatheringAreaService, GatheringAreaService>();
-
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        o => o.UseNetTopologySuite()
+    )
+);
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
@@ -38,6 +39,17 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    await context.Database.MigrateAsync();
+    var insertedCount = await ToplanmaAlaniSeeder.SeedAsync(context, app.Environment);
+
+    if (insertedCount > 0)
+        Console.WriteLine($"{insertedCount} toplanma alanı PostgreSQL'e eklendi.");
+}
 
 if (app.Environment.IsDevelopment())
 {
