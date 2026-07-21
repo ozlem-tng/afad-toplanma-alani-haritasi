@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260721101716_AddCandidateWorkflowAndPostGis")]
+    partial class AddCandidateWorkflowAndPostGis
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,8 +41,8 @@ namespace backend.Migrations
                         .HasColumnType("text")
                         .HasColumnName("islem_turu");
 
-                    b.Property<int?>("CandidatePointId")
-                        .HasColumnType("integer")
+                    b.Property<long?>("CandidatePointId")
+                        .HasColumnType("bigint")
                         .HasColumnName("aday_nokta_id");
 
                     b.Property<DateTime>("CreatedAt")
@@ -73,9 +76,12 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.CandidatePoint", b =>
                 {
-                    b.Property<int>("Id")
-                        .HasColumnType("integer")
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<double>("AlanM2")
                         .HasColumnType("double precision")
@@ -90,9 +96,17 @@ namespace backend.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("olusturulma_tarihi");
 
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("olusturan_kullanici_id");
+
                     b.Property<DateTime?>("DecidedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("karar_tarihi");
+
+                    b.Property<int?>("DecidedByUserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("karar_veren_kullanici_id");
 
                     b.Property<int?>("GatheringAreaId")
                         .HasColumnType("integer")
@@ -110,6 +124,11 @@ namespace backend.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("kapasite");
 
+                    b.Property<Point>("Location")
+                        .IsRequired()
+                        .HasColumnType("geometry(Point,4326)")
+                        .HasColumnName("konum");
+
                     b.Property<string>("MahalleAdi")
                         .HasColumnType("text")
                         .HasColumnName("mahalle_adi");
@@ -119,22 +138,24 @@ namespace backend.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
-                    b.Property<Point>("PointWkt")
-                        .IsRequired()
-                        .HasColumnType("geometry(Point,4326)")
-                        .HasColumnName("point_wkt");
-
                     b.Property<string>("RejectionReason")
                         .HasColumnType("text")
                         .HasColumnName("ret_nedeni");
+
+                    b.Property<int>("SourceId")
+                        .HasColumnType("integer")
+                        .HasColumnName("kaynak_id");
 
                     b.HasKey("Id");
 
                     b.HasIndex("GatheringAreaId");
 
-                    b.HasIndex("PointWkt");
+                    b.HasIndex("Location");
 
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("PointWkt"), "gist");
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Location"), "gist");
+
+                    b.HasIndex("SourceId")
+                        .IsUnique();
 
                     b.ToTable("aday_noktalar");
                 });
@@ -157,9 +178,17 @@ namespace backend.Migrations
                         .HasColumnType("text")
                         .HasColumnName("alan_tur");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("olusturulma_tarihi");
+
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("silinme_tarihi");
+
+                    b.Property<int?>("DeletedByUserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("silinen_kullanici_id");
 
                     b.Property<string>("IlceAdi")
                         .HasColumnType("text")
@@ -168,6 +197,11 @@ namespace backend.Migrations
                     b.Property<int>("Kapasite")
                         .HasColumnType("integer")
                         .HasColumnName("kapasite");
+
+                    b.Property<Point>("Location")
+                        .IsRequired()
+                        .HasColumnType("geometry(Point,4326)")
+                        .HasColumnName("konum");
 
                     b.Property<string>("MahalleAdi")
                         .HasColumnType("text")
@@ -178,16 +212,22 @@ namespace backend.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
-                    b.Property<Point>("PointWkt")
-                        .IsRequired()
-                        .HasColumnType("geometry(Point,4326)")
-                        .HasColumnName("point_wkt");
+                    b.Property<int?>("SourceId")
+                        .HasColumnType("integer")
+                        .HasColumnName("kaynak_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("guncellenme_tarihi");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PointWkt");
+                    b.HasIndex("Location");
 
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("PointWkt"), "gist");
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Location"), "gist");
+
+                    b.HasIndex("SourceId")
+                        .IsUnique();
 
                     b.ToTable("toplanma_alanlari");
                 });

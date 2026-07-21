@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from 'primereact/button';
 import { Column } from 'primereact/column';
 import { DataTable } from 'primereact/datatable';
@@ -11,9 +11,14 @@ import '../styles/AreaListPage.css';
 const formatNumber = (value, maximumFractionDigits = 0) =>
   Number(value || 0).toLocaleString('tr-TR', { maximumFractionDigits });
 
-function AreaListPage({ areas, setAreas, onActivity, onShowOnMap, onDelete }) {
+function AreaListPage({ areas, onUpdate, onShowOnMap, onDelete }) {
   const toast = useRef(null);
   const [filter, setFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [first, setFirst] = useState(0);
+  const [rows, setRows] = useState(10);
+  const [sortField, setSortField] = useState(null);
+  const [sortOrder, setSortOrder] = useState(null);
   const [selected, setSelected] = useState(null);
   const [editDialog, setEditDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -25,36 +30,62 @@ function AreaListPage({ areas, setAreas, onActivity, onShowOnMap, onDelete }) {
   }), [areas]);
   const averageCapacity = counts.total ? Math.round(counts.capacity / counts.total) : 0;
 
-  const filteredAreas = useMemo(() => {
-    const search = filter.trim().toLocaleLowerCase('tr-TR');
-    if (!search) return areas;
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearchQuery(filter), 300);
+    return () => window.clearTimeout(timer);
+  }, [filter]);
 
-    return areas.filter((area) =>
-      [area.name, area.type, area.id, area.poiId]
-        .some((value) => String(value ?? '').toLocaleLowerCase('tr-TR').includes(search)),
-    );
-  }, [areas, filter]);
+  const searchableAreas = useMemo(() => areas.map((area) => ({
+    area,
+    searchText: [area.id, area.name, area.type, area.district, area.neighborhood]
+      .map((value) => String(value ?? '').toLocaleLowerCase('tr-TR'))
+      .join(' '),
+  })), [areas]);
+
+  const processedAreas = useMemo(() => {
+    const search = searchQuery.trim().toLocaleLowerCase('tr-TR');
+    const result = search ? searchableAreas
+      .filter(({ searchText }) => searchText.includes(search))
+      .map(({ area }) => area) : areas;
+
+    if (!sortField || !sortOrder) return result;
+
+    return [...result].sort((firstArea, secondArea) => {
+      const firstValue = firstArea[sortField];
+      const secondValue = secondArea[sortField];
+      const comparison = typeof firstValue === 'number' && typeof secondValue === 'number'
+        ? firstValue - secondValue
+        : String(firstValue ?? '').localeCompare(String(secondValue ?? ''), 'tr', { sensitivity: 'base' });
+      return comparison * sortOrder;
+    });
+  }, [areas, searchQuery, searchableAreas, sortField, sortOrder]);
+
+  const visibleAreas = useMemo(
+    () => processedAreas.slice(first, first + rows),
+    [first, processedAreas, rows],
+  );
+
+  const isFiltering = searchQuery !== filter;
 
   const closeEditDialog = () => {
     setEditDialog(false);
     setSelected(null);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selected) return;
     if (!selected.name.trim() || !selected.type.trim()) {
       toast.current?.show({ severity: 'warn', summary: 'Eksik bilgi', detail: 'Alan adı ve alan türünü doldurun.', life: 3500 });
       return;
     }
 
-    setAreas((current) => current.map((area) =>
-      area.recordKey === selected.recordKey
-        ? { ...selected, name: selected.name.trim(), type: selected.type.trim() }
-        : area,
-    ));
-    onActivity('updated', { ...selected });
-    closeEditDialog();
-    toast.current?.show({ severity: 'success', summary: 'Başarılı', detail: 'Toplanma alanı güncellendi.', life: 3000 });
+    try {
+      await onUpdate({ ...selected, name: selected.name.trim(), type: selected.type.trim() });
+      closeEditDialog();
+      toast.current?.show({ severity: 'success', summary: 'Başarılı', detail: 'Toplanma alanı veritabanında güncellendi.', life: 3000 });
+    } catch (error) {
+      toast.current?.show({ severity: 'error', summary: 'Güncellenemedi', detail: error.message, life: 4000 });
+    }
   };
 
   const confirmDelete = (event) => {
@@ -67,14 +98,18 @@ function AreaListPage({ areas, setAreas, onActivity, onShowOnMap, onDelete }) {
     if (overlay) overlay.style.display = 'none';
     setDeleteTarget(null);
 
-    window.setTimeout(() => {
-      onDelete(target);
-      toast.current?.show({
-        severity: 'success',
-        summary: 'Silindi',
-        detail: `${target.name} listeden kaldırıldı.`,
-        life: 3000,
-      });
+    window.setTimeout(async () => {
+      try {
+        await onDelete(target);
+        toast.current?.show({
+          severity: 'success',
+          summary: 'Silindi',
+          detail: `${target.name} veritabanından kaldırıldı.`,
+          life: 3000,
+        });
+      } catch (error) {
+        toast.current?.show({ severity: 'error', summary: 'Silinemedi', detail: error.message, life: 4000 });
+      }
     }, 0);
   };
 
@@ -125,7 +160,7 @@ function AreaListPage({ areas, setAreas, onActivity, onShowOnMap, onDelete }) {
       <div className="alp-controls">
         <span className="alp-search">
           <i className="pi pi-search" />
-          <InputText value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Alan adı, tür, ID veya POI ID ara..." />
+          <InputText value={filter} onChange={(event) => { setFilter(event.target.value); setFirst(0); }} placeholder="Alan adı, tür, ilçe, mahalle veya ID ara..." />
         </span>
         <div className="alp-stats">
           <div className="alp-stat alp-stat-total"><span>Toplam</span><strong>{counts.total}</strong></div>
@@ -136,9 +171,8 @@ function AreaListPage({ areas, setAreas, onActivity, onShowOnMap, onDelete }) {
       </div>
 
       <div className="alp-table-card">
-        <DataTable dataKey="recordKey" value={filteredAreas} paginator rows={10} rowsPerPageOptions={[10, 20, 50]} stripedRows rowHover scrollable emptyMessage="Aramanızla eşleşen alan bulunamadı." paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport" currentPageReportTemplate="{first}-{last} / {totalRecords} alan" className="alp-table">
+        <DataTable dataKey="recordKey" value={visibleAreas} lazy totalRecords={processedAreas.length} loading={isFiltering} paginator first={first} rows={rows} onPage={(event) => { setFirst(event.first); setRows(event.rows); }} sortField={sortField} sortOrder={sortOrder} onSort={(event) => { setSortField(event.sortField); setSortOrder(event.sortOrder); setFirst(0); }} rowsPerPageOptions={[10, 20, 50]} stripedRows rowHover scrollable emptyMessage="Aramanızla eşleşen alan bulunamadı." paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport" currentPageReportTemplate="{first}-{last} / {totalRecords} alan" className="alp-table">
           <Column field="id" header="ID" sortable className="alp-id-column" />
-          <Column field="poiId" header="POI ID" sortable style={{ minWidth: '120px' }} />
           <Column field="name" header="Alan Adı" sortable body={(area) => <strong className="alp-area-name">{area.name}</strong>} style={{ minWidth: '270px' }} />
           <Column field="type" header="Alan Türü" sortable style={{ minWidth: '125px' }} />
           <Column field="capacity" header="Kapasite" sortable body={(area) => `${formatNumber(area.capacity)} kişi`} style={{ minWidth: '130px' }} />

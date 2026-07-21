@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace backend.DTOs;
 
-public class ToplanmaAlaniDto
+public class CandidatePointDto
 {
     [JsonPropertyName("id")]
     public int Id { get; set; }
@@ -30,4 +30,26 @@ public class ToplanmaAlaniDto
 
     [JsonPropertyName("longitude")]
     public double Longitude { get; set; }
+
+    [JsonPropertyName("kabulEdildi")]
+    public bool? IsAccepted { get; set; }
+
+    [JsonPropertyName("olusturulmaTarihi")]
+    public DateTime CreatedAt { get; set; }
+
+    [JsonPropertyName("kararTarihi")]
+    public DateTime? DecidedAt { get; set; }
+
+    [JsonPropertyName("retNedeni")]
+    public string? RejectionReason { get; set; }
+
+    [JsonPropertyName("toplanmaAlaniId")]
+    public int? GatheringAreaId { get; set; }
+}
+
+public class RejectCandidateDto
+{
+    [System.ComponentModel.DataAnnotations.Required]
+    [JsonPropertyName("retNedeni")]
+    public string RejectionReason { get; set; } = string.Empty;
 }

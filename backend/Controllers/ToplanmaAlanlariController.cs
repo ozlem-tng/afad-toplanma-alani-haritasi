@@ -40,6 +40,13 @@ public class ToplanmaAlanlariController : ControllerBase
         return Ok(alan);
     }
 
+    [HttpPost]
+    public async Task<ActionResult<ToplanmaAlaniDto>> Create([FromBody] CreateToplanmaAlaniDto dto)
+    {
+        var alan = await _service.CreateAsync(dto);
+        return CreatedAtAction(nameof(GetById), new { id = alan.Id }, alan);
+    }
+
     [HttpPut("{id:int}")]
     public async Task<ActionResult<ToplanmaAlaniDto>> Update(
         int id,
@@ -62,5 +69,16 @@ public class ToplanmaAlanlariController : ControllerBase
             return NotFound(new { message = "Toplanma alanı bulunamadı." });
 
         return NoContent();
+    }
+
+    [HttpPost("{id:int}/restore")]
+    public async Task<ActionResult<ToplanmaAlaniDto>> Restore(int id)
+    {
+        var restored = await _service.RestoreAsync(id);
+
+        if (restored is null)
+            return NotFound(new { message = "Silinmiş toplanma alanı bulunamadı." });
+
+        return Ok(restored);
     }
 }

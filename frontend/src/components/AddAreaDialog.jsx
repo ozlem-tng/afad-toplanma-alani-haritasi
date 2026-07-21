@@ -18,11 +18,14 @@ const emptyArea = {
 function AddAreaDialog({ visible, areaTypes, onHide, onSave }) {
   const [area, setArea] = useState(emptyArea);
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
     if (visible) {
       setArea(emptyArea);
       setSubmitted(false);
+      setSaveError('');
     }
   }, [visible]);
 
@@ -40,21 +43,29 @@ function AddAreaDialog({ visible, areaTypes, onHide, onSave }) {
     area.longitude >= -180 &&
     area.longitude <= 180;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSubmitted(true);
     if (!isValid) return;
 
-    onSave({
-      ...area,
-      name: area.name.trim(),
-      type: area.type.trim(),
-    });
+    try {
+      setSaving(true);
+      setSaveError('');
+      await onSave({
+        ...area,
+        name: area.name.trim(),
+        type: area.type.trim(),
+      });
+    } catch (error) {
+      setSaveError(error.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const footer = (
     <div className="alp-dialog-actions">
       <Button label="İptal" severity="secondary" text onClick={onHide} />
-      <Button label="Alanı Kaydet" icon="pi pi-check" onClick={handleSave} />
+      <Button label="Alanı Kaydet" icon="pi pi-check" loading={saving} onClick={handleSave} />
     </div>
   );
 
@@ -167,6 +178,7 @@ function AddAreaDialog({ visible, areaTypes, onHide, onSave }) {
         {submitted && !isValid && (
           <small className="p-error">Zorunlu alanları ve geçerli koordinatları kontrol edin.</small>
         )}
+        {saveError && <small className="p-error">{saveError}</small>}
       </div>
     </Dialog>
   );

@@ -1,18 +1,19 @@
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace backend.DTOs;
 
-public class ToplanmaAlaniDto
+public class CreateToplanmaAlaniDto
 {
-    [JsonPropertyName("id")]
-    public int Id { get; set; }
-
+    [Required]
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
 
+    [Required]
     [JsonPropertyName("alanTur")]
     public string AlanTur { get; set; } = string.Empty;
 
+    [Range(0, double.MaxValue)]
     [JsonPropertyName("alanM2")]
     public double AlanM2 { get; set; }
 
@@ -22,12 +23,15 @@ public class ToplanmaAlaniDto
     [JsonPropertyName("ilceAdi")]
     public string? IlceAdi { get; set; }
 
+    [Range(0, int.MaxValue)]
     [JsonPropertyName("kapasite")]
     public int Kapasite { get; set; }
 
+    [Range(-90, 90)]
     [JsonPropertyName("latitude")]
     public double Latitude { get; set; }
 
+    [Range(-180, 180)]
     [JsonPropertyName("longitude")]
     public double Longitude { get; set; }
 }

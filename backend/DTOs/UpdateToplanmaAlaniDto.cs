@@ -27,6 +27,11 @@ public class UpdateToplanmaAlaniDto
     [JsonPropertyName("kapasite")]
     public int Kapasite { get; set; }
 
-    [JsonPropertyName("pointWkt")]
-    public string? PointWkt { get; set; }
+    [Range(-90, 90)]
+    [JsonPropertyName("latitude")]
+    public double? Latitude { get; set; }
+
+    [Range(-180, 180)]
+    [JsonPropertyName("longitude")]
+    public double? Longitude { get; set; }
 }

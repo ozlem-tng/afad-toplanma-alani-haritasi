@@ -21,19 +21,23 @@ builder.Services.AddScoped<
     IToplanmaAlaniService,
     ToplanmaAlaniService
 >();
+builder.Services.AddScoped<CandidatePointService>();
+builder.Services.AddScoped<ActivityLogService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString(
             "DefaultConnection"
-        )
+        ),
+        npgsqlOptions => npgsqlOptions.UseNetTopologySuite()
     )
 );
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.SetIsOriginAllowed(origin =>
+                  Uri.TryCreate(origin, UriKind.Absolute, out var uri) && uri.IsLoopback)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });

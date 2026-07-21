@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from 'primereact/button';
+import { Toast } from 'primereact/toast';
 import Navbar from '../components/Navbar';
 import MapView from '../components/MapView';
 import SearchBar from '../components/SearchBar';
@@ -16,12 +17,20 @@ import AddAreaDialog from '../components/AddAreaDialog';
 import AreaListPage from './AreaListPage';
 import AnalyticsPage from './AnalyticsPage';
 import ActivityPage from './ActivityPage';
+import CandidatePointsPage from './CandidatePointsPage';
 import { getRoute } from '../api/route';
-import { fetchGatheringAreas } from '../api/toplanmaAlanlari';
+import {
+  createGatheringArea,
+  deleteGatheringArea,
+  fetchGatheringAreas,
+  restoreGatheringArea,
+  updateGatheringArea,
+} from '../api/toplanmaAlanlari';
 import { getNearestAreas } from '../services/nearestAreaService';
 
 function Home({ adminMode = false, areas = [] }) {
   const navigate = useNavigate();
+  const adminToast = useRef(null);
   const [geoAreas, setGeoAreas] = useState(areas);
   const [isLoadingAreas, setIsLoadingAreas] = useState(true);
   const [areasError, setAreasError] = useState('');
@@ -40,8 +49,8 @@ function Home({ adminMode = false, areas = [] }) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [showInfoCard, setShowInfoCard] = useState(false);
   const [adminPage, setAdminPage] = useState('dashboard');
-  const [adminActivities, setAdminActivities] = useState([]);
   const [addAreaDialogOpen, setAddAreaDialogOpen] = useState(false);
+  const [previewArea, setPreviewArea] = useState(null);
 
   const emptyFilters = {
     district: '',
@@ -76,21 +85,18 @@ function Home({ adminMode = false, areas = [] }) {
     };
   }, [adminMode]);
 
-  const visibleAreas = geoAreas;
+  const visibleAreas = previewArea && !geoAreas.some((area) => area.recordKey === previewArea.recordKey)
+    ? [...geoAreas, previewArea]
+    : geoAreas;
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
   const areaTypes = [...new Set(geoAreas.map((area) => area.type).filter(Boolean))]
     .sort((first, second) => first.localeCompare(second, 'tr'));
 
-  const addActivity = (type, area) => {
-    setAdminActivities((current) => [{
-      id: `${Date.now()}-${Math.random()}`,
-      type,
-      area: { ...area },
-      createdAt: new Date().toISOString(),
-    }, ...current].slice(0, 50));
-  };
-
   const showAreaOnAdminMap = (area) => {
+    setPreviewArea(area.recordKey?.startsWith('candidate-') ? area : null);
+    setSearchText('');
+    setFilters(emptyFilters);
+    setTempFilters(emptyFilters);
     setSelectedArea(area);
     setShowInfoCard(true);
     setRoutePanelOpen(false);
@@ -98,46 +104,47 @@ function Home({ adminMode = false, areas = [] }) {
     setAdminPage('dashboard');
   };
 
-  const handleDeleteArea = (area) => {
-    setGeoAreas((current) => current.filter(
-      (item) => item.recordKey !== area.recordKey,
-    ));
-    addActivity('deleted', area);
+  const handleDeleteArea = async (area) => {
+    await deleteGatheringArea(area.id);
+    setGeoAreas((current) => current.filter((item) => item.recordKey !== area.recordKey));
   };
 
-  const handleUndoDelete = (activity) => {
-    setGeoAreas((current) => current.some(
-      (area) => area.recordKey === activity.area.recordKey,
-    ) ? current : [...current, activity.area]);
-    setAdminActivities((current) => current.map((item) =>
-      item.id === activity.id ? { ...item, undone: true } : item,
-    ));
+  const handleUndoDelete = async (activity) => {
+    try {
+      const restored = await restoreGatheringArea(activity.toplanmaAlaniId);
+      setGeoAreas((current) => current.some((area) => area.id === restored.id) ? current : [...current, restored]);
+      setAdminPage('list');
+      adminToast.current?.show({ severity: 'success', summary: 'Alan geri alındı', detail: `${restored.name} yeniden listeye ve haritaya eklendi.`, life: 4000 });
+    } catch (error) {
+      adminToast.current?.show({ severity: 'error', summary: 'Geri alınamadı', detail: error.message, life: 4500 });
+    }
   };
 
-  const handleAddArea = (newArea) => {
-    const nextId = geoAreas.reduce(
-      (maximum, area) => Math.max(maximum, Number(area.id) || 0),
-      0,
-    ) + 1;
-    const savedArea = {
-      ...newArea,
-      recordKey: `admin-${Date.now()}-${nextId}`,
-      id: nextId,
-      poiId: null,
-      distance: 0,
-      walkingMinutes: 0,
-      slopeDegree: null,
-      slopePercent: null,
-      district: '',
-      neighborhood: '',
-      address: '',
-      availability: 'available',
-    };
-
+  const handleAddArea = async (newArea) => {
+    const savedArea = await createGatheringArea(newArea);
     setGeoAreas((current) => [...current, savedArea]);
-    addActivity('added', savedArea);
     setAddAreaDialogOpen(false);
     setAdminPage('list');
+    adminToast.current?.show({ severity: 'success', summary: 'Yeni alan eklendi', detail: `${savedArea.name} veritabanına kaydedildi ve haritaya eklendi.`, life: 4500 });
+  };
+
+  const handleUpdateArea = async (area) => {
+    const updated = await updateGatheringArea(area.id, area);
+    setGeoAreas((current) => current.map((item) => item.id === updated.id ? updated : item));
+  };
+
+  const handleCandidateAccepted = (candidate) => {
+    const areaId = candidate.gatheringAreaId || candidate.id;
+    const acceptedArea = {
+      ...candidate,
+      id: areaId,
+      recordKey: String(areaId),
+      availability: 'available',
+    };
+    setGeoAreas((current) => current.some((area) => area.id === areaId)
+      ? current
+      : [...current, acceptedArea]);
+    setPreviewArea(null);
   };
 
   const filteredAreas = visibleAreas.filter((area) => {
@@ -332,11 +339,15 @@ function Home({ adminMode = false, areas = [] }) {
 
   if (adminMode) {
     return (
+      <>
+      <Toast ref={adminToast} position="top-right" baseZIndex={13000} />
       <AdminLayout
         activePage={adminPage}
         pageTitle={
           adminPage === 'list'
             ? 'Toplanma Alanı Listesi'
+            : adminPage === 'suggestions'
+              ? 'Aday Alan Önerileri'
             : adminPage === 'stats'
               ? 'Analizler & İstatistikler'
               : adminPage === 'activity'
@@ -357,17 +368,19 @@ function Home({ adminMode = false, areas = [] }) {
           navigate('/', { replace: true });
         }}
       >
-        {isLoadingAreas
+        {isLoadingAreas && ['dashboard', 'list', 'stats'].includes(adminPage)
           ? <p>GeoData yükleniyor...</p>
-          : areasError
+          : areasError && ['dashboard', 'list', 'stats'].includes(adminPage)
             ? <p role="alert">{areasError}</p>
             : adminPage === 'list'
-              ? <AreaListPage areas={geoAreas} setAreas={setGeoAreas} onActivity={addActivity} onShowOnMap={showAreaOnAdminMap} onDelete={handleDeleteArea} />
-              : adminPage === 'stats'
-                ? <AnalyticsPage areas={geoAreas} />
-                : adminPage === 'activity'
-                  ? <ActivityPage activities={adminActivities} onShowOnMap={showAreaOnAdminMap} onUndoDelete={handleUndoDelete} />
-                  : mapContent}
+              ? <AreaListPage areas={geoAreas} onUpdate={handleUpdateArea} onShowOnMap={showAreaOnAdminMap} onDelete={handleDeleteArea} />
+              : adminPage === 'suggestions'
+                ? <CandidatePointsPage onShowOnMap={showAreaOnAdminMap} onAreaAccepted={handleCandidateAccepted} />
+                : adminPage === 'stats'
+                  ? <AnalyticsPage areas={geoAreas} />
+                  : adminPage === 'activity'
+                    ? <ActivityPage onShowOnMap={showAreaOnAdminMap} onUndoDelete={handleUndoDelete} />
+                    : mapContent}
         <AddAreaDialog
           visible={addAreaDialogOpen}
           areaTypes={areaTypes}
@@ -375,6 +388,7 @@ function Home({ adminMode = false, areas = [] }) {
           onSave={handleAddArea}
         />
       </AdminLayout>
+      </>
     );
   }
 

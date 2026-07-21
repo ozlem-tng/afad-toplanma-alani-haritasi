@@ -4,11 +4,12 @@ using NetTopologySuite.Geometries;
 
 namespace backend.Models;
 
-[Table("toplanma_alanlari")]
-public class ToplanmaAlani
+[Table("aday_noktalar")]
+public class CandidatePoint
 {
     [Key]
     [Column("id")]
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }
 
     [Required]
@@ -35,7 +36,20 @@ public class ToplanmaAlani
     [Column("point_wkt", TypeName = "geometry(Point,4326)")]
     public Point PointWkt { get; set; } = null!;
 
-    [Column("silinme_tarihi")]
-    public DateTime? DeletedAt { get; set; }
+    [Column("kabul_edildi")]
+    public bool? IsAccepted { get; set; }
 
+    [Column("olusturulma_tarihi")]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [Column("karar_tarihi")]
+    public DateTime? DecidedAt { get; set; }
+
+    [Column("ret_nedeni")]
+    public string? RejectionReason { get; set; }
+
+    [Column("toplanma_alani_id")]
+    public int? GatheringAreaId { get; set; }
+
+    public ToplanmaAlani? GatheringArea { get; set; }
 }

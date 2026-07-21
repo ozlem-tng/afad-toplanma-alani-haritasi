@@ -1,19 +1,18 @@
 using System.Text.Json;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
 
 namespace backend.Data.Seeders;
 
 public static class ToplanmaAlaniSeeder
 {
     private const int BatchSize = 500;
+    private const int CandidateCount = 15;
 
-    public static async Task<int> SeedAsync(
-        AppDbContext context,
-        IWebHostEnvironment environment)
+    public static async Task<int> SeedAsync(AppDbContext context, IWebHostEnvironment environment)
     {
-        // Veritabanı daha önce doldurulduysa aynı kayıtları tekrar ekleme.
-        if (await context.ToplanmaAlanlari.AnyAsync())
+        if (await context.ToplanmaAlanlari.AnyAsync() || await context.CandidatePoints.AnyAsync())
             return 0;
 
         var filePath = Path.Combine(
@@ -27,93 +26,92 @@ public static class ToplanmaAlaniSeeder
         await using var stream = File.OpenRead(filePath);
         using var document = await JsonDocument.ParseAsync(stream);
 
-        var features = document.RootElement.GetProperty("features");
+        var sourceRows = new List<SourceRow>();
         var seenIds = new HashSet<int>();
-        var batch = new List<ToplanmaAlani>(BatchSize);
-        var insertedCount = 0;
 
-        await using var transaction = await context.Database.BeginTransactionAsync();
-
-        foreach (var feature in features.EnumerateArray())
+        foreach (var feature in document.RootElement.GetProperty("features").EnumerateArray())
         {
             var properties = feature.GetProperty("properties");
-            var id = GetInt(properties, "ID");
+            var sourceId = GetInt(properties, "ID");
 
-            // Kaynak dosyada aynı ID ile yinelenen feature'lar bulunuyor.
-            if (id <= 0 || !seenIds.Add(id))
+            if (sourceId <= 0 || !seenIds.Add(sourceId))
                 continue;
 
-            var geometry = feature.GetProperty("geometry");
-            var (longitude, latitude) = GetGeometryCenter(geometry);
-
-            batch.Add(new ToplanmaAlani
-            {
-                Id = id,
-                Name = GetString(properties, "NAME") ?? "İsimsiz Toplanma Alanı",
-                AlanTur = GetString(properties, "ALAN_TUR") ?? "BELİRTİLMEMİŞ",
-                AlanM2 = GetDouble(properties, "Alan_m2"),
-                MahalleAdi = GetString(properties, "MAHALLE_ADI"),
-                IlceAdi = GetString(properties, "ILCE_ADI"),
-                Kapasite = GetInt(properties, "Kapasite"),
-                PointWkt = longitude.HasValue && latitude.HasValue
-                    ? FormattableString.Invariant($"POINT({longitude.Value} {latitude.Value})")
-                    : null
-            });
-
-            if (batch.Count < BatchSize)
+            var (longitude, latitude) = GetGeometryCenter(feature.GetProperty("geometry"));
+            if (!longitude.HasValue || !latitude.HasValue)
                 continue;
 
-            insertedCount += await InsertBatchAsync(context, batch);
+            sourceRows.Add(new SourceRow(
+                sourceId,
+                GetString(properties, "NAME") ?? "İsimsiz Toplanma Alanı",
+                GetString(properties, "ALAN_TUR") ?? "BELİRTİLMEMİŞ",
+                GetDouble(properties, "Alan_m2"),
+                GetString(properties, "MAHALLE_ADI"),
+                GetString(properties, "ILCE_ADI"),
+                GetInt(properties, "Kapasite"),
+                CreatePoint(longitude.Value, latitude.Value)));
         }
 
-        insertedCount += await InsertBatchAsync(context, batch);
-        await transaction.CommitAsync();
+        var orderedRows = sourceRows.OrderBy(x => x.SourceId).ToList();
+        var candidateRows = orderedRows.TakeLast(CandidateCount).ToList();
+        var areaRows = orderedRows.Take(Math.Max(0, orderedRows.Count - CandidateCount)).ToList();
+        await using var transaction = await context.Database.BeginTransactionAsync();
 
+        await context.CandidatePoints.AddRangeAsync(candidateRows.Select(x => new CandidatePoint
+        {
+            Id = x.SourceId,
+            Name = x.Name,
+            AlanTur = x.AlanTur,
+            AlanM2 = x.AlanM2,
+            MahalleAdi = x.MahalleAdi,
+            IlceAdi = x.IlceAdi,
+            Kapasite = x.Kapasite,
+            PointWkt = x.PointWkt,
+            CreatedAt = DateTime.UtcNow
+        }));
+        await context.SaveChangesAsync();
+
+        var insertedCount = 0;
+        foreach (var batch in areaRows.Chunk(BatchSize))
+        {
+            await context.ToplanmaAlanlari.AddRangeAsync(batch.Select(x => new ToplanmaAlani
+            {
+                Id = x.SourceId,
+                Name = x.Name,
+                AlanTur = x.AlanTur,
+                AlanM2 = x.AlanM2,
+                MahalleAdi = x.MahalleAdi,
+                IlceAdi = x.IlceAdi,
+                Kapasite = x.Kapasite,
+                PointWkt = x.PointWkt
+            }));
+            insertedCount += await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+        }
+
+        await transaction.CommitAsync();
         return insertedCount;
     }
 
-    private static async Task<int> InsertBatchAsync(
-        AppDbContext context,
-        List<ToplanmaAlani> batch)
-    {
-        if (batch.Count == 0)
-            return 0;
+    private static Point CreatePoint(double longitude, double latitude) =>
+        new(longitude, latitude) { SRID = 4326 };
 
-        var count = batch.Count;
-        await context.ToplanmaAlanlari.AddRangeAsync(batch);
-        await context.SaveChangesAsync();
-        context.ChangeTracker.Clear();
-        batch.Clear();
-
-        return count;
-    }
-
-    private static string? GetString(JsonElement properties, string name)
-    {
-        return properties.TryGetProperty(name, out var value) &&
-               value.ValueKind == JsonValueKind.String
+    private static string? GetString(JsonElement properties, string name) =>
+        properties.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
             ? value.GetString()
             : null;
-    }
 
-    private static int GetInt(JsonElement properties, string name)
-    {
-        return properties.TryGetProperty(name, out var value) &&
-               value.TryGetInt32(out var result)
+    private static int GetInt(JsonElement properties, string name) =>
+        properties.TryGetProperty(name, out var value) && value.TryGetInt32(out var result)
             ? result
             : 0;
-    }
 
-    private static double GetDouble(JsonElement properties, string name)
-    {
-        return properties.TryGetProperty(name, out var value) &&
-               value.TryGetDouble(out var result)
+    private static double GetDouble(JsonElement properties, string name) =>
+        properties.TryGetProperty(name, out var value) && value.TryGetDouble(out var result)
             ? result
             : 0;
-    }
 
-    private static (double? Longitude, double? Latitude) GetGeometryCenter(
-        JsonElement geometry)
+    private static (double? Longitude, double? Latitude) GetGeometryCenter(JsonElement geometry)
     {
         if (!geometry.TryGetProperty("coordinates", out var coordinates))
             return (null, null);
@@ -122,20 +120,11 @@ public static class ToplanmaAlaniSeeder
         var maxLongitude = double.MinValue;
         var minLatitude = double.MaxValue;
         var maxLatitude = double.MinValue;
+        ReadCoordinates(coordinates, ref minLongitude, ref maxLongitude, ref minLatitude, ref maxLatitude);
 
-        ReadCoordinates(
-            coordinates,
-            ref minLongitude,
-            ref maxLongitude,
-            ref minLatitude,
-            ref maxLatitude);
-
-        if (minLongitude == double.MaxValue)
-            return (null, null);
-
-        return (
-            (minLongitude + maxLongitude) / 2,
-            (minLatitude + maxLatitude) / 2);
+        return minLongitude == double.MaxValue
+            ? (null, null)
+            : ((minLongitude + maxLongitude) / 2, (minLatitude + maxLatitude) / 2);
     }
 
     private static void ReadCoordinates(
@@ -154,7 +143,6 @@ public static class ToplanmaAlaniSeeder
         {
             var longitude = element[0].GetDouble();
             var latitude = element[1].GetDouble();
-
             minLongitude = Math.Min(minLongitude, longitude);
             maxLongitude = Math.Max(maxLongitude, longitude);
             minLatitude = Math.Min(minLatitude, latitude);
@@ -163,13 +151,16 @@ public static class ToplanmaAlaniSeeder
         }
 
         foreach (var child in element.EnumerateArray())
-        {
-            ReadCoordinates(
-                child,
-                ref minLongitude,
-                ref maxLongitude,
-                ref minLatitude,
-                ref maxLatitude);
-        }
+            ReadCoordinates(child, ref minLongitude, ref maxLongitude, ref minLatitude, ref maxLatitude);
     }
+
+    private sealed record SourceRow(
+        int SourceId,
+        string Name,
+        string AlanTur,
+        double AlanM2,
+        string? MahalleAdi,
+        string? IlceAdi,
+        int Kapasite,
+        Point PointWkt);
 }

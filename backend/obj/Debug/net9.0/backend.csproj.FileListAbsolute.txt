@@ -381,3 +381,8 @@ C:\Users\ufya9\OneDrive\Masaüstü\afad-toplanma-alani-haritasi\backend\bin\Debu
 C:\Users\ufya9\OneDrive\Masaüstü\afad-toplanma-alani-haritasi\backend\bin\Debug\net9.0\Npgsql.dll
 C:\Users\ufya9\OneDrive\Masaüstü\afad-toplanma-alani-haritasi\backend\bin\Debug\net9.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
 C:\Users\ufya9\OneDrive\Masaüstü\afad-toplanma-alani-haritasi\backend\bin\Debug\net9.0\GeoData\TOPLANMAALANLARI_recent.geojson
+C:\Users\ufya9\OneDrive\Masaüstü\afad-toplanma-alani-haritasi\backend\bin\Debug\net9.0\NetTopologySuite.dll
+C:\Users\ufya9\OneDrive\Masaüstü\afad-toplanma-alani-haritasi\backend\bin\Debug\net9.0\NetTopologySuite.IO.PostGis.dll
+C:\Users\ufya9\OneDrive\Masaüstü\afad-toplanma-alani-haritasi\backend\bin\Debug\net9.0\Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite.dll
+C:\Users\ufya9\OneDrive\Masaüstü\afad-toplanma-alani-haritasi\backend\bin\Debug\net9.0\Npgsql.NetTopologySuite.dll
+C:\Users\ufya9\OneDrive\Masaüstü\afad-toplanma-alani-haritasi\backend\obj\Debug\net9.0\EFCoreNpgsqlNetTopologySuite.cs

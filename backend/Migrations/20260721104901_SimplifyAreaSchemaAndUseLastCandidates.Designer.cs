@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260721104901_SimplifyAreaSchemaAndUseLastCandidates")]
+    partial class SimplifyAreaSchemaAndUseLastCandidates
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,8 +41,8 @@ namespace backend.Migrations
                         .HasColumnType("text")
                         .HasColumnName("islem_turu");
 
-                    b.Property<int?>("CandidatePointId")
-                        .HasColumnType("integer")
+                    b.Property<long?>("CandidatePointId")
+                        .HasColumnType("bigint")
                         .HasColumnName("aday_nokta_id");
 
                     b.Property<DateTime>("CreatedAt")
@@ -73,9 +76,12 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.CandidatePoint", b =>
                 {
-                    b.Property<int>("Id")
-                        .HasColumnType("integer")
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<double>("AlanM2")
                         .HasColumnType("double precision")

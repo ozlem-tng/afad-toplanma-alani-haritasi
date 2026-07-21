@@ -1,8 +1,10 @@
+using System.Text.Json;
 using backend.Business.Interfaces;
 using backend.Data;
 using backend.DTOs;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
 
 namespace backend.Business.Services;
 
@@ -19,6 +21,7 @@ public class ToplanmaAlaniService : IToplanmaAlaniService
     {
         var alanlar = await _context.ToplanmaAlanlari
             .AsNoTracking()
+            .Where(x => x.DeletedAt == null)
             .OrderBy(x => x.Id)
             .ToListAsync();
 
@@ -29,29 +32,53 @@ public class ToplanmaAlaniService : IToplanmaAlaniService
     {
         var alan = await _context.ToplanmaAlanlari
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null);
 
         return alan is null ? null : MapToDto(alan);
     }
 
-    public async Task<ToplanmaAlaniDto?> UpdateAsync(
-        int id,
-        UpdateToplanmaAlaniDto dto)
+    public async Task<ToplanmaAlaniDto> CreateAsync(CreateToplanmaAlaniDto dto)
+    {
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        var alan = new ToplanmaAlani
+        {
+            Name = dto.Name.Trim(),
+            AlanTur = dto.AlanTur.Trim(),
+            AlanM2 = dto.AlanM2,
+            MahalleAdi = NormalizeOptionalText(dto.MahalleAdi),
+            IlceAdi = NormalizeOptionalText(dto.IlceAdi),
+            Kapasite = dto.Kapasite,
+            PointWkt = CreatePoint(dto.Longitude, dto.Latitude)
+        };
+
+        _context.ToplanmaAlanlari.Add(alan);
+        await _context.SaveChangesAsync();
+        AddActivity("ALAN_EKLENDI", alan.Id, null, null, Snapshot(alan));
+        await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
+
+        return MapToDto(alan);
+    }
+
+    public async Task<ToplanmaAlaniDto?> UpdateAsync(int id, UpdateToplanmaAlaniDto dto)
     {
         var alan = await _context.ToplanmaAlanlari
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null);
 
         if (alan is null)
             return null;
 
+        var oldValues = Snapshot(alan);
         alan.Name = dto.Name.Trim();
         alan.AlanTur = dto.AlanTur.Trim();
         alan.AlanM2 = dto.AlanM2;
         alan.MahalleAdi = NormalizeOptionalText(dto.MahalleAdi);
         alan.IlceAdi = NormalizeOptionalText(dto.IlceAdi);
         alan.Kapasite = dto.Kapasite;
-        alan.PointWkt = NormalizeOptionalText(dto.PointWkt);
+        if (dto.Latitude.HasValue && dto.Longitude.HasValue)
+            alan.PointWkt = CreatePoint(dto.Longitude.Value, dto.Latitude.Value);
 
+        AddActivity("ALAN_GUNCELLENDI", alan.Id, null, oldValues, Snapshot(alan));
         await _context.SaveChangesAsync();
         return MapToDto(alan);
     }
@@ -59,33 +86,75 @@ public class ToplanmaAlaniService : IToplanmaAlaniService
     public async Task<bool> DeleteAsync(int id)
     {
         var alan = await _context.ToplanmaAlanlari
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null);
 
         if (alan is null)
             return false;
 
-        _context.ToplanmaAlanlari.Remove(alan);
+        var oldValues = Snapshot(alan);
+        alan.DeletedAt = DateTime.UtcNow;
+        AddActivity("ALAN_SILINDI", alan.Id, null, oldValues, Snapshot(alan));
         await _context.SaveChangesAsync();
         return true;
     }
 
-    private static string? NormalizeOptionalText(string? value)
+    public async Task<ToplanmaAlaniDto?> RestoreAsync(int id)
     {
-        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        var alan = await _context.ToplanmaAlanlari
+            .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt != null);
+
+        if (alan is null)
+            return null;
+
+        var oldValues = Snapshot(alan);
+        alan.DeletedAt = null;
+        AddActivity("ALAN_GERI_ALINDI", alan.Id, null, oldValues, Snapshot(alan));
+        await _context.SaveChangesAsync();
+        return MapToDto(alan);
     }
 
-    private static ToplanmaAlaniDto MapToDto(ToplanmaAlani entity)
+    internal static ToplanmaAlaniDto MapToDto(ToplanmaAlani entity) => new()
     {
-        return new ToplanmaAlaniDto
+        Id = entity.Id,
+        Name = entity.Name,
+        AlanTur = entity.AlanTur,
+        AlanM2 = entity.AlanM2,
+        MahalleAdi = entity.MahalleAdi,
+        IlceAdi = entity.IlceAdi,
+        Kapasite = entity.Kapasite,
+        Latitude = entity.PointWkt.Y,
+        Longitude = entity.PointWkt.X
+    };
+
+    internal static string Snapshot(ToplanmaAlani entity) => JsonSerializer.Serialize(new
+    {
+        id = entity.Id,
+        name = entity.Name,
+        alanTur = entity.AlanTur,
+        alanM2 = entity.AlanM2,
+        mahalleAdi = entity.MahalleAdi,
+        ilceAdi = entity.IlceAdi,
+        kapasite = entity.Kapasite,
+        latitude = entity.PointWkt.Y,
+        longitude = entity.PointWkt.X
+    });
+
+    private void AddActivity(string action, int? areaId, int? candidateId, string? oldValues, string? newValues)
+    {
+        _context.ActivityLogs.Add(new ActivityLog
         {
-            Id = entity.Id,
-            Name = entity.Name,
-            AlanTur = entity.AlanTur,
-            AlanM2 = entity.AlanM2,
-            MahalleAdi = entity.MahalleAdi,
-            IlceAdi = entity.IlceAdi,
-            Kapasite = entity.Kapasite,
-            PointWkt = entity.PointWkt
-        };
+            ActionType = action,
+            GatheringAreaId = areaId,
+            CandidatePointId = candidateId,
+            OldValues = oldValues,
+            NewValues = newValues,
+            CreatedAt = DateTime.UtcNow
+        });
     }
+
+    private static Point CreatePoint(double longitude, double latitude) =>
+        new(longitude, latitude) { SRID = 4326 };
+
+    private static string? NormalizeOptionalText(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
