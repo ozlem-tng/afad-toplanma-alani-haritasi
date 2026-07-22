@@ -26,8 +26,16 @@ public class AppDbContext : DbContext
             .HasIndex(x => x.PointWkt)
             .HasMethod("gist");
 
+        modelBuilder.Entity<ToplanmaAlani>()
+            .HasIndex(x => x.AreaGeometry)
+            .HasMethod("gist");
+
         modelBuilder.Entity<CandidatePoint>()
             .HasIndex(x => x.PointWkt)
+            .HasMethod("gist");
+
+        modelBuilder.Entity<CandidatePoint>()
+            .HasIndex(x => x.AreaGeometry)
             .HasMethod("gist");
 
         modelBuilder.Entity<CandidatePoint>()

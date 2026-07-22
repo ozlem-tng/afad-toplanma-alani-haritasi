@@ -36,6 +36,9 @@ public class CandidatePoint
     [Column("point_wkt", TypeName = "geometry(Point,4326)")]
     public Point PointWkt { get; set; } = null!;
 
+    [Column("alan_geometrisi", TypeName = "geometry(MultiPolygon,4326)")]
+    public MultiPolygon? AreaGeometry { get; set; }
+
     [Column("kabul_edildi")]
     public bool? IsAccepted { get; set; }
 

@@ -50,10 +50,10 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
     await context.Database.MigrateAsync();
-    var insertedCount = await ToplanmaAlaniSeeder.SeedAsync(context, app.Environment);
+    var changedCount = await ToplanmaAlaniSeeder.SeedAsync(context, app.Environment);
 
-    if (insertedCount > 0)
-        Console.WriteLine($"{insertedCount} toplanma alanı PostgreSQL'e eklendi.");
+    if (changedCount > 0)
+        Console.WriteLine($"{changedCount} coğrafi kayıt PostgreSQL ile eşitlendi.");
 }
 
 if (app.Environment.IsDevelopment())
