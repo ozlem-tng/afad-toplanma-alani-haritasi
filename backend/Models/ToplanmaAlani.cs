@@ -35,6 +35,9 @@ public class ToplanmaAlani
     [Column("point_wkt", TypeName = "geometry(Point,4326)")]
     public Point PointWkt { get; set; } = null!;
 
+    [Column("alan_geometrisi", TypeName = "geometry(MultiPolygon,4326)")]
+    public MultiPolygon? AreaGeometry { get; set; }
+
     [Column("silinme_tarihi")]
     public DateTime? DeletedAt { get; set; }
 

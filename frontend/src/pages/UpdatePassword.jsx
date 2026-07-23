@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, AlertCircle, ArrowLeft, Shield } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, AlertCircle, ArrowLeft } from "lucide-react";
 import Sidebar from "../components/Sidebar"; 
 import { authService } from "../api/auth";
 import loginStyles from "../styles/Login.module.css";    
 import cardStyles from "../styles/AuthCard.module.css";  
+// Imported logo2 from your assets folder
+import logo2 from "../assets/Logo2.png"; 
 
 export default function UpdatePassword() {
     const [showPass, setShowPass] = useState(false);
@@ -28,6 +30,9 @@ export default function UpdatePassword() {
         const email = e.target.email.value;
         const newPassword = e.target.newPassword.value;
 
+         if (!password || password.trim() === "") return "Şifre alanı boş bırakılamaz.";
+        if (/\s/.test(password)) return "Şifre boşluk karakteri içeremez.";
+        
         if (!email || !newPassword) {
             setError("Lütfen tüm alanları doldurun.");
             return;
@@ -72,18 +77,24 @@ export default function UpdatePassword() {
                 <div className={loginStyles.formWrapper}>
                     
                     <div className={cardStyles.card}>
-                        <div className={cardStyles.logo}>
-                            <div className={cardStyles.logoIcon}>
-                                <Shield className={cardStyles.logoIconInner} />
-                            </div>
-                            <div>
-                                <span className={cardStyles.logoTitle}>AFAD</span>
-                                <p className={cardStyles.logoSubtitle}>Yönetici Paneli</p>
-                            </div>
+                        {/* Logo container styled to remove adjacent text and perfectly center the larger image */}
+                        <div className={cardStyles.logo} style={{ display: "flex", justifyContent: "center", width: "100%", margin: "0 0 10px 0" }}>
+                            <img 
+                                src={logo2} 
+                                alt="ATİS Logo" 
+                                style={{ 
+                                    height: "75px", 
+                                    width: "auto", 
+                                    objectFit: "contain",
+                                    borderRadius: "12px",
+                                    backgroundColor: "#ffffff",
+                                    padding: "4px"
+                                }} 
+                            />
                         </div>
 
                         <h1 className={cardStyles.title} style={{ marginTop: "24px" }}>Şifre Güncelle</h1>
-                        <p className={cardStyles.subtitle}>Ankara Afet Yönetim Sistemi</p>
+                        <p className={cardStyles.subtitle} style={{ textAlign: "center" }}>Ankara Afet Yönetim Sistemi</p>
 
                         {error && <div style={{ color: "#ef4444", fontSize: "14px", margin: "10px 0", display: "flex", alignItems: "center", gap: "6px" }}><AlertCircle size={16}/> {error}</div>}
                         {success && <div style={{ color: "#10b981", fontSize: "14px", margin: "10px 0", display: "flex", alignItems: "center", gap: "6px" }}><AlertCircle size={16}/> {success}</div>}

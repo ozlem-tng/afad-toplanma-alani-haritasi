@@ -5,7 +5,6 @@ using backend.Data.Seeders;
 using backend.Business.Interfaces;
 using backend.Business.Services;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers()
@@ -17,21 +16,20 @@ builder.Services.AddControllers()
 builder.Services.AddHttpClient<OsrmService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddScoped<
-    IToplanmaAlaniService,
-    ToplanmaAlaniService
->();
+
+// Business / Domain Servisleri
+builder.Services.AddScoped<IToplanmaAlaniService, ToplanmaAlaniService>();
 builder.Services.AddScoped<CandidatePointService>();
 builder.Services.AddScoped<ActivityLogService>();
+builder.Services.AddScoped<IEmailService, EmailService>(); // <-- EKLENEN SERVİS KAYDI
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
-        builder.Configuration.GetConnectionString(
-            "DefaultConnection"
-        ),
+        builder.Configuration.GetConnectionString("DefaultConnection"),
         npgsqlOptions => npgsqlOptions.UseNetTopologySuite()
     )
 );
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
@@ -66,7 +64,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// app.UseHttpsRedirection(); 
+app.UseHttpsRedirection(); 
 app.UseCors("AllowReactApp");
 app.UseAuthorization();
 app.MapControllers();

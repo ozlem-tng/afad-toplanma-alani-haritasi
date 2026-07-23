@@ -53,6 +53,7 @@ public class CandidatePointService
             PointWkt = candidate.PointWkt.Copy() as NetTopologySuite.Geometries.Point
                 ?? throw new InvalidOperationException("Aday konumu geçersiz.")
         };
+        area.AreaGeometry = candidate.AreaGeometry?.Copy() as NetTopologySuite.Geometries.MultiPolygon;
 
         _context.ToplanmaAlanlari.Add(area);
         await _context.SaveChangesAsync();
