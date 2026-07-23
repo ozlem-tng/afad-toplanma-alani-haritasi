@@ -364,6 +364,7 @@ function Home({ adminMode = false, areas = [] }) {
           />
         ) : null}
         onLogout={() => {
+          localStorage.removeItem('token');
           localStorage.removeItem('adminUser');
           navigate('/', { replace: true });
         }}

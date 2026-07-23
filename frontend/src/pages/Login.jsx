@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-import AuthCard from "../components/AuthCard"; 
+import AuthCard from "../components/AuthCard";
 import { authService } from "../api/auth";
 import styles from "../styles/Login.module.css";
 
@@ -16,8 +16,8 @@ export default function LoginPage() {
 
     const [isTwoFactorStep, setIsTwoFactorStep] = useState(false);
     const [loginEmail, setLoginEmail] = useState("");
-    
-    const navigate = useNavigate(); 
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         setError("");
@@ -28,6 +28,8 @@ export default function LoginPage() {
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
+        localStorage.removeItem('token');
+        localStorage.removeItem('adminUser');
     }, []);
 
     const validatePassword = (password) => {
@@ -45,13 +47,13 @@ export default function LoginPage() {
         e.preventDefault();
         setError("");
         setSuccess("");
-        
+
         const email = e.target.email.value;
         const password = e.target.password.value;
-        
+
         try {
             const data = await authService.login(email, password);
-            
+
             if (data.requiresTwoFactor) {
                 setLoginEmail(email);
                 setIsTwoFactorStep(true);
@@ -59,7 +61,7 @@ export default function LoginPage() {
             } else {
                 localStorage.setItem('token', data.token);
                 setSuccess("Giriş başarılı! Admin paneline yönlendiriliyorsunuz...");
-                
+
                 // Admin sayfasına yönlendirme eklendi
                 setTimeout(() => navigate("/admin"), 1500);
             }
@@ -79,7 +81,7 @@ export default function LoginPage() {
             const data = await authService.verifyLogin(loginEmail, code);
             localStorage.setItem('token', data.token);
             setSuccess("Doğrulama başarılı! Admin paneline yönlendiriliyorsunuz...");
-            
+
             // Admin sayfasına yönlendirme eklendi
             setTimeout(() => {
                 navigate("/admin");
@@ -117,7 +119,7 @@ export default function LoginPage() {
         try {
             await authService.register(name, email, password, registrationNumber);
             setSuccess("Kaydınız başarıyla gerçekleştirilmiştir! Giriş sayfasına yönlendiriliyorsunuz...");
-            
+
             setTimeout(() => {
                 setTab('giris');
                 setSuccess("");
@@ -136,7 +138,7 @@ export default function LoginPage() {
             <div className={styles.leftPanel}>
                 <div className={styles.watermark}>AFAD</div>
                 <div className={styles.formWrapper}>
-                    
+
                     <AuthCard
                         tab={tab}
                         setTab={setTab}
@@ -157,9 +159,9 @@ export default function LoginPage() {
                     />
 
                     <div className={styles.footerLinks}>
-                        <a 
-                            href="#" 
-                            className={styles.footerLink} 
+                        <a
+                            href="#"
+                            className={styles.footerLink}
                             onClick={(e) => { e.preventDefault(); handleRedirectToUpdatePassword(); }}
                         >
                             Şifremi Unuttum
