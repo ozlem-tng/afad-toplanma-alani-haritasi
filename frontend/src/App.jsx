@@ -4,7 +4,6 @@ import LoginPage from "./pages/Login";
 import UpdatePassword from "./pages/UpdatePassword.jsx"; 
 
 function AdminRoute() {
-  // 'adminUser' yerine 'token' varlığını kontrol ediyoruz
   const hasAdminSession = Boolean(localStorage.getItem('token'));
 
   return hasAdminSession
