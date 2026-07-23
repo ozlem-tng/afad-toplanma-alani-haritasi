@@ -17,18 +17,19 @@ const request = async (path, options = {}) => {
   return response.status === 204 ? null : response.json();
 };
 
-export const normalizeGatheringArea = (row) => ({
-  recordKey: String(row.id),
-  id: row.id,
-  name: row.name,
-  type: row.alanTur,
-  areaSize: Number(row.alanM2) || 0,
-  neighborhood: row.mahalleAdi || '',
-  district: row.ilceAdi || '',
-  capacity: Number(row.kapasite) || 0,
-  latitude: Number(row.latitude),
-  longitude: Number(row.longitude),
+const normalizeGatheringArea = (area) => ({
+  id: area.id,
+  name: area.name,
+  latitude: area.latitude,
+  longitude: area.longitude,
+  district: area.ilceAdi,
+  neighborhood: area.mahalleAdi,
+  type: area.alanTur,
+  capacity: area.kapasite,
   availability: 'available',
+  areaSize: area.alanM2,
+  geometry: area.geometry,
+  recordKey: String(area.id),
 });
 
 const toApiPayload = (area) => ({

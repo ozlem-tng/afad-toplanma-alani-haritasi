@@ -11,7 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        options.JsonSerializerOptions.Converters.Add(
+            new NetTopologySuite.IO.Converters.GeoJsonConverterFactory()
+        );
     });
 
 builder.Services.AddHttpClient<OsrmService>();

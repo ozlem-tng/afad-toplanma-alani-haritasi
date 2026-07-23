@@ -1,0 +1,237 @@
+/* ===========================
+   INFO CARD
+=========================== */
+
+.info-card {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  width: 380px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 12px 30px rgba(36, 53, 83, 0.15);
+  z-index: 1000;
+}
+
+.info-card-title {
+  margin: 0 0 18px;
+  color: #243553;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.info-card-empty {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.info-card-close {
+  position: absolute !important;
+  top: 12px;
+  right: 12px;
+  color: #64748b !important;
+}
+
+.info-card-close:hover {
+  background: #f3f4f6 !important;
+  color: #243553 !important;
+}
+
+/* ===========================
+   INFO ROW
+=========================== */
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.info-row-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 115px;
+}
+
+.info-row-title {
+  color: #64748b;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.info-row-value {
+  flex: 1;
+  text-align: right;
+  color: #243553;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* ===========================
+   STATUS
+=========================== */
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-top: 10px;
+  padding-top: 14px;
+
+  border-top: 1px solid #e5e7eb;
+}
+
+.status-title {
+  color: #243553;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.status-badge.active {
+  background: #e8f5e9;
+  color: #5b8d39;
+}
+
+.status-badge.passive {
+  background: #fdecec;
+  color: #dc2626;
+}
+
+/* ===========================
+   BUTTON
+=========================== */
+
+.route-button {
+  width: 100%;
+  margin-top: 20px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+
+  padding: 14px;
+
+  border: none;
+  border-radius: 12px;
+
+  background: #243553;
+  color: #fff;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.route-button:hover {
+  background: #1a2940;
+}
+
+/* ===========================
+   ROUTE INFO
+=========================== */
+
+.route-info-card {
+  margin-top: 20px;
+}
+
+.route-info-card h4 {
+  margin: 0 0 14px;
+  color: #243553;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.route-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 14px 16px;
+  margin-bottom: 12px;
+
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #243553;
+  border-radius: 12px;
+
+  transition: .2s ease;
+}
+
+.route-info-row:hover {
+  background: #f1f5f9;
+}
+
+.route-info-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-weight: 600;
+  color: #243553;
+}
+
+.route-info-title .MuiSvgIcon-root {
+  color: #243553;
+}
+
+.route-info-values {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.route-info-values div {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+
+  color: #475569;
+  font-size: 14px;
+}
+
+.route-info-values .MuiSvgIcon-root {
+  font-size: 16px;
+  color: #64748b;
+}
+.route-info-title div{
+    display:flex;
+    flex-direction:column;
+}
+
+.route-info-title span{
+    font-weight:600;
+}
+
+.route-info-title small{
+    color:#94a3b8;
+    font-size:12px;
+}
+.route-info-header{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:14px;
+    color:#243553;
+}
+
+.route-info-header h4{
+    margin:0;
+    font-size:15px;
+}

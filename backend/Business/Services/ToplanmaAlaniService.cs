@@ -123,7 +123,8 @@ public class ToplanmaAlaniService : IToplanmaAlaniService
         IlceAdi = entity.IlceAdi,
         Kapasite = entity.Kapasite,
         Latitude = entity.PointWkt.Y,
-        Longitude = entity.PointWkt.X
+        Longitude = entity.PointWkt.X,
+        Geometry = entity.AreaGeometry
     };
 
     internal static string Snapshot(ToplanmaAlani entity) => JsonSerializer.Serialize(new

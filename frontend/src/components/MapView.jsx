@@ -13,6 +13,9 @@ import { fromLonLat, toLonLat } from 'ol/proj';
 import { Style, Circle, Fill, Stroke } from 'ol/style';
 import { boundingExtent } from 'ol/extent';
 
+import HeatmapLayer from 'ol/layer/Heatmap';
+import GeoJSON from 'ol/format/GeoJSON';
+
 import 'ol/ol.css';
 
 import { COLORS } from '../styles/colors';
@@ -27,19 +30,33 @@ function MapView({
   onSelectArea,
   userLocation,
   startPoint,
-  isSelectingStartPoint = false,
+  isSelectingStartPoint,
   onSelectStartPoint,
   routeGeometry,
-  height = 'calc(100vh - 76px)',
+  travelMode,
+  showHeatmap,
+  height,
 }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
+
+  const heatmapSourceRef = useRef(new VectorSource());
+  const heatmapLayerRef = useRef(
+    new HeatmapLayer({
+      source: heatmapSourceRef.current,
+      blur: 30,
+      radius: 18,
+      visible: false,
+      opacity: 0.8,
+    }),
+  );
 
   const vectorSourceRef = useRef(null);
   const routeSourceRef = useRef(null);
 
   const featuresRef = useRef([]);
   const previousAreasKeyRef = useRef('');
+  const markerLayerRef = useRef(null);
 
   const isValidCoordinate = (lat, lon) => {
     const latitude = Number(lat);
@@ -66,6 +83,33 @@ function MapView({
       return feature;
     });
 
+    if (startPoint) {
+      const startFeature = new Feature({
+        geometry: new Point(
+          fromLonLat([startPoint.longitude, startPoint.latitude]),
+        ),
+      });
+
+      startFeature.set('featureType', 'startPoint');
+
+      startFeature.setStyle(
+        new Style({
+          image: new Circle({
+            radius: 9,
+            fill: new Fill({
+              color: '#2563EB',
+            }),
+            stroke: new Stroke({
+              color: '#FFFFFF',
+              width: 3,
+            }),
+          }),
+        }),
+      );
+
+      features.push(startFeature);
+    }
+
     if (
       userLocation &&
       isValidCoordinate(userLocation.latitude, userLocation.longitude)
@@ -78,33 +122,6 @@ function MapView({
           ]),
         ),
       });
-
-      if (startPoint) {
-        const startFeature = new Feature({
-          geometry: new Point(
-            fromLonLat([startPoint.longitude, startPoint.latitude]),
-          ),
-        });
-
-        startFeature.set('featureType', 'startPoint');
-
-        startFeature.setStyle(
-          new Style({
-            image: new Circle({
-              radius: 9,
-              fill: new Fill({
-                color: '#2563EB',
-              }),
-              stroke: new Stroke({
-                color: '#FFFFFF',
-                width: 3,
-              }),
-            }),
-          }),
-        );
-
-        features.push(startFeature);
-      }
 
       userFeature.set('featureType', 'userLocation');
 
@@ -135,7 +152,9 @@ function MapView({
 
       if (!area) return;
 
-      const isSelected = (selectedArea?.recordKey || selectedArea?.id) === (area.recordKey || area.id);
+      const isSelected =
+        (selectedArea?.recordKey || selectedArea?.id) ===
+        (area.recordKey || area.id);
 
       const markerColor = isSelected
         ? COLORS.primary
@@ -265,18 +284,36 @@ function MapView({
     onSelectArea?.(null);
   };
 
+  const selectedAreaSourceRef = useRef(new VectorSource());
+
+  const selectedAreaLayerRef = useRef(
+    new VectorLayer({
+      source: selectedAreaSourceRef.current,
+      zIndex: 5,
+      style: new Style({
+        fill: new Fill({
+          color: 'rgba(37, 99, 235, 0.20)',
+        }),
+        stroke: new Stroke({
+          color: '#2563eb',
+          width: 3,
+        }),
+      }),
+    }),
+  );
+
   useEffect(() => {
     vectorSourceRef.current = new VectorSource();
     routeSourceRef.current = new VectorSource();
 
-    const markerLayer = new VectorLayer({
+    markerLayerRef.current = new VectorLayer({
       source: vectorSourceRef.current,
-      zIndex: 2,
+      zIndex: 10,
     });
 
     const routeLayer = new VectorLayer({
       source: routeSourceRef.current,
-      zIndex: 1,
+      zIndex: 20,
     });
 
     mapInstance.current = new Map({
@@ -285,8 +322,10 @@ function MapView({
         new TileLayer({
           source: new OSM(),
         }),
+        heatmapLayerRef.current,
+        selectedAreaLayerRef.current,
+        markerLayerRef.current,
         routeLayer,
-        markerLayer,
       ],
       view: new View({
         center: DEFAULT_CENTER,
@@ -339,15 +378,6 @@ function MapView({
       return;
 
     if (userLocation) return;
-
-    mapInstance.current.getView().animate({
-      center: fromLonLat([
-        Number(selectedArea.longitude),
-        Number(selectedArea.latitude),
-      ]),
-      zoom: SELECTED_AREA_ZOOM,
-      duration: 800,
-    });
   }, [selectedArea, userLocation]);
 
   useEffect(() => {
@@ -428,14 +458,21 @@ function MapView({
 
     routeFeature.set('featureType', 'route');
 
-    routeFeature.setStyle(
+    routeFeature.setStyle([
+      new Style({
+        stroke: new Stroke({
+          color: '#ffffff',
+          width: 10,
+        }),
+      }),
       new Style({
         stroke: new Stroke({
           color: COLORS.primary,
           width: 6,
+          lineDash: travelMode === 'walking' ? [14, 10] : undefined,
         }),
       }),
-    );
+    ]);
 
     routeSourceRef.current.addFeature(routeFeature);
 
@@ -452,6 +489,88 @@ function MapView({
       });
     }
   }, [routeGeometry]);
+
+  useEffect(() => {
+    const source = selectedAreaSourceRef.current;
+    source.clear();
+
+    if (!selectedArea?.geometry || !mapInstance.current) return;
+
+    try {
+      const features = new GeoJSON().readFeatures(selectedArea.geometry, {
+        dataProjection: 'EPSG:4326',
+        featureProjection: 'EPSG:3857',
+      });
+
+      if (!features.length) {
+        console.warn('Polygon feature oluşturulamadı.');
+        return;
+      }
+
+      source.addFeatures(features);
+
+      const extent = source.getExtent();
+      const isExtentValid = extent?.every((value) => Number.isFinite(value));
+
+      if (isExtentValid) {
+        mapInstance.current.getView().fit(extent, {
+          padding: [80, 80, 80, 80],
+          duration: 700,
+          maxZoom: 18,
+        });
+      }
+    } catch (error) {
+      console.error('Polygon çizilemedi:', error);
+    }
+  }, [selectedArea]);
+
+  useEffect(() => {
+    if (!heatmapLayerRef.current || !heatmapSourceRef.current) return;
+
+    const source = heatmapSourceRef.current;
+
+    source.clear();
+
+    heatmapLayerRef.current.setVisible(showHeatmap);
+
+    markerLayerRef.current?.setVisible(!showHeatmap);
+
+    const view = mapInstance.current?.getView();
+
+    if (showHeatmap) {
+      selectedAreaSourceRef.current.clear(); // ← BURAYA
+    }
+
+    if (showHeatmap && view) {
+      selectedAreaSourceRef.current.clear();
+
+      view.animate({
+        center: DEFAULT_CENTER,
+        zoom: DEFAULT_ZOOM,
+        duration: 700,
+      });
+    }
+
+    if (!showHeatmap) return;
+
+    const features = areas
+      .filter(
+        (area) => area && isValidCoordinate(area.latitude, area.longitude),
+      )
+      .map((area) => {
+        const feature = new Feature({
+          geometry: new Point(
+            fromLonLat([Number(area.longitude), Number(area.latitude)]),
+          ),
+        });
+
+        feature.set('weight', Math.min((area.capacity || 500) / 5000, 1));
+
+        return feature;
+      });
+
+    source.addFeatures(features);
+  }, [areas, showHeatmap]);
 
   return (
     <div

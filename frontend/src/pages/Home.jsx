@@ -27,6 +27,7 @@ import {
   updateGatheringArea,
 } from '../api/toplanmaAlanlari';
 import { getNearestAreas } from '../services/nearestAreaService';
+import AnalysisButton from '../components/AnalysisButton';
 
 function Home({ adminMode = false, areas = [] }) {
   const navigate = useNavigate();
@@ -51,6 +52,7 @@ function Home({ adminMode = false, areas = [] }) {
   const [adminPage, setAdminPage] = useState('dashboard');
   const [addAreaDialogOpen, setAddAreaDialogOpen] = useState(false);
   const [previewArea, setPreviewArea] = useState(null);
+  const [showHeatmap, setShowHeatmap] = useState(false);
 
   const emptyFilters = {
     district: '',
@@ -61,6 +63,29 @@ function Home({ adminMode = false, areas = [] }) {
   const [filters, setFilters] = useState(emptyFilters);
   const [tempFilters, setTempFilters] = useState(emptyFilters);
 
+  const [routeInfo, setRouteInfo] = useState({
+    walking: null,
+    driving: null,
+  });
+  const handleToggleHeatmap = () => {
+  if (!showHeatmap) {
+    // Analiz moduna geçiliyor
+
+    setSelectedArea(null);
+    setShowInfoCard(false);
+
+    setRouteGeometry(null);
+    setRouteInfo(null);
+
+    setRoutePanelOpen(false);
+
+    setStartPoint(null);
+
+    setIsSelectingStartPoint(false);
+  }
+
+  setShowHeatmap((prev) => !prev);
+};
   useEffect(() => {
     let cancelled = false;
     setIsLoadingAreas(true);
@@ -68,12 +93,15 @@ function Home({ adminMode = false, areas = [] }) {
 
     fetchGatheringAreas()
       .then((result) => {
+        console.log(result);
         if (!cancelled) setGeoAreas(result);
       })
       .catch((error) => {
         console.error('GeoData yüklenemedi:', error);
         if (!cancelled) {
-          setAreasError('GeoData yüklenemedi. Backend bağlantısını kontrol edin.');
+          setAreasError(
+            'GeoData yüklenemedi. Backend bağlantısını kontrol edin.',
+          );
         }
       })
       .finally(() => {
@@ -85,12 +113,26 @@ function Home({ adminMode = false, areas = [] }) {
     };
   }, [adminMode]);
 
-  const visibleAreas = previewArea && !geoAreas.some((area) => area.recordKey === previewArea.recordKey)
-    ? [...geoAreas, previewArea]
-    : geoAreas;
+  useEffect(() => {
+    if (!routeGeometry) return;
+    if (!startPoint || !selectedArea) return;
+
+    createRoute();
+  }, [travelMode]);
+
+  useEffect(() => {
+    console.log('Selected Area:', selectedArea);
+  }, [selectedArea]);
+
+  const visibleAreas =
+    previewArea &&
+    !geoAreas.some((area) => area.recordKey === previewArea.recordKey)
+      ? [...geoAreas, previewArea]
+      : geoAreas;
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
-  const areaTypes = [...new Set(geoAreas.map((area) => area.type).filter(Boolean))]
-    .sort((first, second) => first.localeCompare(second, 'tr'));
+  const areaTypes = [
+    ...new Set(geoAreas.map((area) => area.type).filter(Boolean)),
+  ].sort((first, second) => first.localeCompare(second, 'tr'));
 
   const showAreaOnAdminMap = (area) => {
     setPreviewArea(area.recordKey?.startsWith('candidate-') ? area : null);
@@ -106,17 +148,33 @@ function Home({ adminMode = false, areas = [] }) {
 
   const handleDeleteArea = async (area) => {
     await deleteGatheringArea(area.id);
-    setGeoAreas((current) => current.filter((item) => item.recordKey !== area.recordKey));
+    setGeoAreas((current) =>
+      current.filter((item) => item.recordKey !== area.recordKey),
+    );
   };
 
   const handleUndoDelete = async (activity) => {
     try {
       const restored = await restoreGatheringArea(activity.toplanmaAlaniId);
-      setGeoAreas((current) => current.some((area) => area.id === restored.id) ? current : [...current, restored]);
+      setGeoAreas((current) =>
+        current.some((area) => area.id === restored.id)
+          ? current
+          : [...current, restored],
+      );
       setAdminPage('list');
-      adminToast.current?.show({ severity: 'success', summary: 'Alan geri alındı', detail: `${restored.name} yeniden listeye ve haritaya eklendi.`, life: 4000 });
+      adminToast.current?.show({
+        severity: 'success',
+        summary: 'Alan geri alındı',
+        detail: `${restored.name} yeniden listeye ve haritaya eklendi.`,
+        life: 4000,
+      });
     } catch (error) {
-      adminToast.current?.show({ severity: 'error', summary: 'Geri alınamadı', detail: error.message, life: 4500 });
+      adminToast.current?.show({
+        severity: 'error',
+        summary: 'Geri alınamadı',
+        detail: error.message,
+        life: 4500,
+      });
     }
   };
 
@@ -125,12 +183,19 @@ function Home({ adminMode = false, areas = [] }) {
     setGeoAreas((current) => [...current, savedArea]);
     setAddAreaDialogOpen(false);
     setAdminPage('list');
-    adminToast.current?.show({ severity: 'success', summary: 'Yeni alan eklendi', detail: `${savedArea.name} veritabanına kaydedildi ve haritaya eklendi.`, life: 4500 });
+    adminToast.current?.show({
+      severity: 'success',
+      summary: 'Yeni alan eklendi',
+      detail: `${savedArea.name} veritabanına kaydedildi ve haritaya eklendi.`,
+      life: 4500,
+    });
   };
 
   const handleUpdateArea = async (area) => {
     const updated = await updateGatheringArea(area.id, area);
-    setGeoAreas((current) => current.map((item) => item.id === updated.id ? updated : item));
+    setGeoAreas((current) =>
+      current.map((item) => (item.id === updated.id ? updated : item)),
+    );
   };
 
   const handleCandidateAccepted = (candidate) => {
@@ -141,9 +206,11 @@ function Home({ adminMode = false, areas = [] }) {
       recordKey: String(areaId),
       availability: 'available',
     };
-    setGeoAreas((current) => current.some((area) => area.id === areaId)
-      ? current
-      : [...current, acceptedArea]);
+    setGeoAreas((current) =>
+      current.some((area) => area.id === areaId)
+        ? current
+        : [...current, acceptedArea],
+    );
     setPreviewArea(null);
   };
 
@@ -153,8 +220,10 @@ function Home({ adminMode = false, areas = [] }) {
       area.name?.toLocaleLowerCase('tr-TR').includes(text) ||
       area.district?.toLocaleLowerCase('tr-TR').includes(text) ||
       area.neighborhood?.toLocaleLowerCase('tr-TR').includes(text);
-    const matchesDistrict = !filters.district || area.district === filters.district;
-    const matchesNeighborhood = !filters.neighborhood || area.neighborhood === filters.neighborhood;
+    const matchesDistrict =
+      !filters.district || area.district === filters.district;
+    const matchesNeighborhood =
+      !filters.neighborhood || area.neighborhood === filters.neighborhood;
     const matchesType = !filters.type || area.type === filters.type;
 
     let matchesCapacity = true;
@@ -166,8 +235,13 @@ function Home({ adminMode = false, areas = [] }) {
       matchesCapacity = area.capacity > 3000;
     }
 
-    return matchesSearch && matchesDistrict && matchesNeighborhood &&
-      matchesType && matchesCapacity;
+    return (
+      matchesSearch &&
+      matchesDistrict &&
+      matchesNeighborhood &&
+      matchesType &&
+      matchesCapacity
+    );
   });
 
   const handleUseCurrentLocation = ({ openNearestPanel = false } = {}) => {
@@ -187,11 +261,13 @@ function Home({ adminMode = false, areas = [] }) {
         setRouteGeometry(null);
 
         if (openNearestPanel) {
-          setNearestAreas(getNearestAreas(
-            visibleAreas,
-            location.latitude,
-            location.longitude,
-          ));
+          setNearestAreas(
+            getNearestAreas(
+              visibleAreas,
+              location.latitude,
+              location.longitude,
+            ),
+          );
           setShowNearestPanel(true);
         }
       },
@@ -221,23 +297,48 @@ function Home({ adminMode = false, areas = [] }) {
     setRouteGeometry(null);
   };
 
-  const handleCreateRoute = async () => {
+  const createRoute = async () => {
     if (!startPoint || !selectedArea) return;
 
     try {
       setIsLoadingRoute(true);
-      const routeResponse = await getRoute(
-        startPoint.latitude,
-        startPoint.longitude,
-        selectedArea.latitude,
-        selectedArea.longitude,
-      );
-      const firstRoute = routeResponse?.routes?.[0];
+      const [walkingResponse, drivingResponse] = await Promise.all([
+        getRoute(
+          startPoint.latitude,
+          startPoint.longitude,
+          selectedArea.latitude,
+          selectedArea.longitude,
+          'walking',
+        ),
+        getRoute(
+          startPoint.latitude,
+          startPoint.longitude,
+          selectedArea.latitude,
+          selectedArea.longitude,
+          'driving',
+        ),
+      ]);
+
+      const walkingRoute = walkingResponse?.routes?.[0];
+      const drivingRoute = drivingResponse?.routes?.[0];
+
+      setRouteInfo({
+        walking: {
+          distance: walkingRoute?.distance ?? 0,
+          duration: walkingRoute?.duration ?? 0,
+        },
+        driving: {
+          distance: drivingRoute?.distance ?? 0,
+          duration: drivingRoute?.duration ?? 0,
+        },
+      });
+
+      const firstRoute = travelMode === 'walking' ? walkingRoute : drivingRoute;
       if (!firstRoute?.geometry?.coordinates?.length) {
         throw new Error('Backend geçerli bir rota döndürmedi.');
       }
       setRouteGeometry(firstRoute.geometry);
-      setRoutePanelOpen(false);
+      //setRoutePanelOpen(false);
     } catch (error) {
       console.error('Rota oluşturulamadı:', error);
       alert('Rota oluşturulamadı. Lütfen tekrar deneyin.');
@@ -247,11 +348,13 @@ function Home({ adminMode = false, areas = [] }) {
   };
 
   const mapContent = (
-    <div style={{
-      position: 'relative',
-      height: adminMode ? '100%' : 'auto',
-      minHeight: adminMode ? 0 : undefined,
-    }}>
+    <div
+      style={{
+        position: 'relative',
+        height: adminMode ? '100%' : 'auto',
+        minHeight: adminMode ? 0 : undefined,
+      }}
+    >
       <MapView
         areas={filteredAreas}
         selectedArea={selectedArea}
@@ -261,6 +364,8 @@ function Home({ adminMode = false, areas = [] }) {
         isSelectingStartPoint={isSelectingStartPoint}
         onSelectStartPoint={handleSelectStartPoint}
         routeGeometry={routeGeometry}
+        travelMode={travelMode}
+        showHeatmap={showHeatmap}
         height={adminMode ? '100%' : 'calc(100vh - 76px)'}
       />
 
@@ -305,9 +410,13 @@ function Home({ adminMode = false, areas = [] }) {
           setFilters(emptyFilters);
         }}
       />
-      <LocationButton onClick={() => handleUseCurrentLocation({ openNearestPanel: true })} />
+      <LocationButton
+        onClick={() => handleUseCurrentLocation({ openNearestPanel: true })}
+      />
 
-      {showInfoCard && selectedArea && (
+      <AnalysisButton showHeatmap={showHeatmap} onClick={handleToggleHeatmap} />
+
+      {showInfoCard && (
         <InfoCard
           selectedArea={selectedArea}
           onOpenRoutePanel={() => {
@@ -322,12 +431,15 @@ function Home({ adminMode = false, areas = [] }) {
         open={routePanelOpen}
         selectedArea={selectedArea}
         travelMode={travelMode}
+        routeInfo={routeInfo}
         onTravelModeChange={setTravelMode}
         startPoint={startPoint}
         onUseCurrentLocation={() => handleUseCurrentLocation()}
         onSelectFromMap={() => setIsSelectingStartPoint(true)}
-        onSearchAddress={() => alert('Adres arama özelliği henüz kullanıma hazır değil.')}
-        onCreateRoute={handleCreateRoute}
+        onSearchAddress={() =>
+          alert('Adres arama özelliği henüz kullanıma hazır değil.')
+        }
+        onCreateRoute={createRoute}
         isLoadingRoute={isLoadingRoute}
         onClose={() => {
           setRoutePanelOpen(false);
@@ -340,60 +452,89 @@ function Home({ adminMode = false, areas = [] }) {
   if (adminMode) {
     return (
       <>
-      <Toast ref={adminToast} position="top-right" baseZIndex={13000} />
-      <AdminLayout
-        activePage={adminPage}
-        pageTitle={
-          adminPage === 'list'
-            ? 'Toplanma Alanı Listesi'
-            : adminPage === 'suggestions'
-              ? 'Aday Alan Önerileri'
-            : adminPage === 'stats'
-              ? 'Analizler & İstatistikler'
-              : adminPage === 'activity'
-                ? 'Son İşlemler'
-                : 'Yönetici Paneli'
-        }
-        onNavigate={setAdminPage}
-        headerAction={adminPage === 'list' ? (
-          <Button
-            className="alp-add-button"
-            label="Yeni Toplanma Alanı"
-            icon="pi pi-plus"
-            onClick={() => setAddAreaDialogOpen(true)}
-          />
-        ) : null}
-        onLogout={() => {
-          localStorage.removeItem('adminUser');
-          navigate('/', { replace: true });
-        }}
-      >
-        {isLoadingAreas && ['dashboard', 'list', 'stats'].includes(adminPage)
-          ? <p>GeoData yükleniyor...</p>
-          : areasError && ['dashboard', 'list', 'stats'].includes(adminPage)
-            ? <p role="alert">{areasError}</p>
-            : adminPage === 'list'
-              ? <AreaListPage areas={geoAreas} onUpdate={handleUpdateArea} onShowOnMap={showAreaOnAdminMap} onDelete={handleDeleteArea} />
+        <Toast ref={adminToast} position="top-right" baseZIndex={13000} />
+        <AdminLayout
+          activePage={adminPage}
+          pageTitle={
+            adminPage === 'list'
+              ? 'Toplanma Alanı Listesi'
               : adminPage === 'suggestions'
-                ? <CandidatePointsPage onShowOnMap={showAreaOnAdminMap} onAreaAccepted={handleCandidateAccepted} />
+                ? 'Aday Alan Önerileri'
                 : adminPage === 'stats'
-                  ? <AnalyticsPage areas={geoAreas} />
+                  ? 'Analizler & İstatistikler'
                   : adminPage === 'activity'
-                    ? <ActivityPage onShowOnMap={showAreaOnAdminMap} onUndoDelete={handleUndoDelete} />
-                    : mapContent}
-        <AddAreaDialog
-          visible={addAreaDialogOpen}
-          areaTypes={areaTypes}
-          onHide={() => setAddAreaDialogOpen(false)}
-          onSave={handleAddArea}
-        />
-      </AdminLayout>
+                    ? 'Son İşlemler'
+                    : 'Yönetici Paneli'
+          }
+          onNavigate={setAdminPage}
+          headerAction={
+            adminPage === 'list' ? (
+              <Button
+                className="alp-add-button"
+                label="Yeni Toplanma Alanı"
+                icon="pi pi-plus"
+                onClick={() => setAddAreaDialogOpen(true)}
+              />
+            ) : null
+          }
+          onLogout={() => {
+            localStorage.removeItem('adminUser');
+            navigate('/', { replace: true });
+          }}
+        >
+          {isLoadingAreas &&
+          ['dashboard', 'list', 'stats'].includes(adminPage) ? (
+            <p>GeoData yükleniyor...</p>
+          ) : areasError &&
+            ['dashboard', 'list', 'stats'].includes(adminPage) ? (
+            <p role="alert">{areasError}</p>
+          ) : adminPage === 'list' ? (
+            <AreaListPage
+              areas={geoAreas}
+              onUpdate={handleUpdateArea}
+              onShowOnMap={showAreaOnAdminMap}
+              onDelete={handleDeleteArea}
+            />
+          ) : adminPage === 'suggestions' ? (
+            <CandidatePointsPage
+              onShowOnMap={showAreaOnAdminMap}
+              onAreaAccepted={handleCandidateAccepted}
+            />
+          ) : adminPage === 'stats' ? (
+            <AnalyticsPage areas={geoAreas} />
+          ) : adminPage === 'activity' ? (
+            <ActivityPage
+              onShowOnMap={showAreaOnAdminMap}
+              onUndoDelete={handleUndoDelete}
+            />
+          ) : (
+            mapContent
+          )}
+          <AddAreaDialog
+            visible={addAreaDialogOpen}
+            areaTypes={areaTypes}
+            onHide={() => setAddAreaDialogOpen(false)}
+            onSave={handleAddArea}
+          />
+        </AdminLayout>
       </>
     );
   }
 
-  if (isLoadingAreas) return <><Navbar /><p>GeoData yükleniyor...</p></>;
-  if (areasError) return <><Navbar /><p role="alert">{areasError}</p></>;
+  if (isLoadingAreas)
+    return (
+      <>
+        <Navbar />
+        <p>GeoData yükleniyor...</p>
+      </>
+    );
+  if (areasError)
+    return (
+      <>
+        <Navbar />
+        <p role="alert">{areasError}</p>
+      </>
+    );
 
   return (
     <>

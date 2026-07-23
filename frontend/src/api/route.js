@@ -6,6 +6,7 @@ export const getRoute = async (
   startLongitude,
   endLatitude,
   endLongitude,
+  travelMode,
 ) => {
   const response = await api.get('/route', {
     params: {
@@ -13,6 +14,7 @@ export const getRoute = async (
       startLongitude,
       endLatitude,
       endLongitude,
+      travelMode,
     },
   });
 

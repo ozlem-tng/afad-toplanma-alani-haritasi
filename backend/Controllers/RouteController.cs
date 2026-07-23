@@ -19,13 +19,20 @@ public class RouteController : ControllerBase
         double startLatitude,
         double startLongitude,
         double endLatitude,
-        double endLongitude)
+        double endLongitude,
+        string travelMode = "walking")
     {
+        if (travelMode is not ("walking" or "driving"))
+        {
+            return BadRequest(new { message = "travelMode yalnızca 'walking' veya 'driving' olabilir." });
+        }
+
         var result = await _osrmService.GetRouteAsync(
             startLatitude,
             startLongitude,
             endLatitude,
-            endLongitude
+            endLongitude,
+            travelMode
         );
 
         return Content(result, "application/json");
