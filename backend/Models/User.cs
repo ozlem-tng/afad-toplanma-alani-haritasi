@@ -1,7 +1,5 @@
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Net.Http.Headers;
-
 namespace backend.Models;
+
 public class User
 {
     public int Id { get; set; }
@@ -15,4 +13,7 @@ public class User
 
     public int FailedAttemptCount { get; set; } = 0;
     public DateTime? LockoutEnd { get; set; }
+
+    public string? LoginVerificationCode { get; set; }
+    public DateTime? LoginVerificationCodeExpiresAt { get; set; }
 }

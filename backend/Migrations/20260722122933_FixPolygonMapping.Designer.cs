@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260722122933_FixPolygonMapping")]
+    partial class FixPolygonMapping
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -86,10 +89,6 @@ namespace backend.Migrations
                         .HasColumnType("text")
                         .HasColumnName("alan_tur");
 
-                    b.Property<MultiPolygon>("AreaGeometry")
-                        .HasColumnType("geometry(MultiPolygon,4326)")
-                        .HasColumnName("alan_geometrisi");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("olusturulma_tarihi");
@@ -128,21 +127,25 @@ namespace backend.Migrations
                         .HasColumnType("geometry(Point,4326)")
                         .HasColumnName("point_wkt");
 
+                    b.Property<Polygon>("PolygonWkt")
+                        .HasColumnType("geometry(Polygon,4326)")
+                        .HasColumnName("polygon_wkt");
+
                     b.Property<string>("RejectionReason")
                         .HasColumnType("text")
                         .HasColumnName("ret_nedeni");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AreaGeometry");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("AreaGeometry"), "gist");
-
                     b.HasIndex("GatheringAreaId");
 
                     b.HasIndex("PointWkt");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("PointWkt"), "gist");
+
+                    b.HasIndex("PolygonWkt");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("PolygonWkt"), "gist");
 
                     b.ToTable("aday_noktalar");
                 });
@@ -164,10 +167,6 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("alan_tur");
-
-                    b.Property<MultiPolygon>("AreaGeometry")
-                        .HasColumnType("geometry(MultiPolygon,4326)")
-                        .HasColumnName("alan_geometrisi");
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
@@ -195,15 +194,19 @@ namespace backend.Migrations
                         .HasColumnType("geometry(Point,4326)")
                         .HasColumnName("point_wkt");
 
+                    b.Property<Polygon>("PolygonWkt")
+                        .HasColumnType("geometry(Polygon,4326)")
+                        .HasColumnName("polygon_wkt");
+
                     b.HasKey("Id");
-
-                    b.HasIndex("AreaGeometry");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("AreaGeometry"), "gist");
 
                     b.HasIndex("PointWkt");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("PointWkt"), "gist");
+
+                    b.HasIndex("PolygonWkt");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("PolygonWkt"), "gist");
 
                     b.ToTable("toplanma_alanlari");
                 });

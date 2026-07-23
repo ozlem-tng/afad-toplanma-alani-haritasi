@@ -1,9 +1,10 @@
-import { Shield, Building, Users, AlertTriangle, Clock, Calendar, Bell } from "lucide-react";
+import { Building, Users, AlertTriangle, Clock, Calendar, Bell } from "lucide-react";
 import styles from "../styles/Sidebar.module.css";
+import logo2 from "../assets/Logo2.png";
 
 export default function Sidebar({ currentTime }) {
     const statsItems = [
-        { icon: Building, value: "247", label: "Toplanma Alanı" },
+        { icon: Building, value: "8097", label: "Toplanma Alanı" },
         { icon: Users, value: "15.2K", label: "Kullanıcı" },
         { icon: AlertTriangle, value: "4", label: "Aktif Alarm" },
         { icon: Clock, value: "7/24", label: "Hizmet" },
@@ -33,18 +34,38 @@ export default function Sidebar({ currentTime }) {
                 {/* LOGO / SLOGAN */}
                 <div className={styles.logoSection}>
                     <div className={styles.logoWrapper}>
-                        <div className={styles.logoBox}>
-                            <div className={styles.logoInner}>
-                                <Shield className={styles.logoIcon} />
-                            </div>
+                        <div
+                            className={styles.logoBox}
+                            style={{
+                                width: "120px",
+                                height: "120px",
+                                padding: "10px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                overflow: "hidden",
+                                borderRadius: "24px",
+                                backgroundColor: "#ffffff",
+                                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)"
+                            }}
+                        >
+                            <img
+                                src={logo2}
+                                alt="ATİS Logo"
+                                style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "contain"
+                                }}
+                            />
                         </div>
                         <div className={styles.statusBadge}>
                             <div className={styles.statusDot} />
                         </div>
                     </div>
                     <h2 className={styles.logoText}>AFAD</h2>
-                    <p className={styles.logoSub}>Afet Yönetim Sistemi</p>
-                    <p className={styles.slogan}>Afet anında hızlı karar, güvenli koordinasyon ve kesintisiz yönetim.</p>
+                    <p className={styles.logoSub} style={{ textAlign: "center" }}>Afet Toplanma Alanı İşaretleme Sistemi</p>
+                    <p className={styles.slogan}>Her nokta bir güven, her işaret bir hayat.</p>
                 </div>
 
                 {/* İSTATİSTİKLER */}

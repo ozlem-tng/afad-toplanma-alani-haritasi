@@ -11,6 +11,8 @@ import {
   UserRound,
 } from 'lucide-react';
 import '../styles/AdminLayout.css';
+import logo2 from '../assets/Logo2.png';
+
 
 const menuItems = [
   { key: 'dashboard', label: 'Dashboard / Harita', icon: Grid2X2 },
@@ -34,7 +36,19 @@ function AdminLayout({
     <div className={`adl-layout ${collapsed ? 'adl-collapsed' : ''}`}>
       <aside className="adl-sidebar">
         <div className="adl-brand">
-          <span className="adl-brand-icon"><Shield size={20} /></span>
+          <img
+            src={logo2}
+            alt="AFAD Logo"
+            style={{
+              height: '36px',
+              width: '36px',
+              objectFit: 'contain',
+              borderRadius: '8px',
+              backgroundColor: '#ffffff',
+              padding: '2px',
+              flexShrink: 0
+            }}
+          />
           <span className="adl-brand-text">
             <strong>AFAD</strong>
             <small>Yönetici Paneli</small>

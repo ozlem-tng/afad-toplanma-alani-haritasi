@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using BCrypt.Net;
-using backend.Data;
 using backend.Models;
 using backend.DTOs;
+using backend.Business.Interfaces;
+using backend.Business.Services;
+using backend.Data;
+using System;
+using System.Threading.Tasks;
 
 namespace backend.Controllers;
 
@@ -12,122 +15,172 @@ namespace backend.Controllers;
 public class UserController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IEmailService _emailService;
 
-    public UserController(AppDbContext context)
+    public UserController(AppDbContext context, IEmailService emailService)
     {
         _context = context;
+        _emailService = emailService;
     }
+    
 
     [HttpPost("register")]
-    public async Task<ActionResult> Register([FromBody] RegisterRequest request)
+    public async Task<ActionResult> Register([FromBody] RegisterRequest? request)
     {
+        if (request == null)
+        {
+            return BadRequest(new { message = "Invalid request payload." });
+        }
+
         if (string.IsNullOrWhiteSpace(request.Email) ||
             string.IsNullOrWhiteSpace(request.Password) ||
             string.IsNullOrWhiteSpace(request.Name) ||
             string.IsNullOrWhiteSpace(request.RegistrationNumber))
         {
-            return BadRequest(new { message = "Name, email, passwrd and registration number are required for registration." });
+            return BadRequest(new { message = "Name, email, password, and registration number are required." });
         }
 
-        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-        if (existingUser != null)
+        try
         {
-            return Conflict(new { message = "Email already exists." });
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (existingUser != null)
+            {
+                return BadRequest(new { message = "Kayıtlı kullanıcı zaten var"});
+            }
+
+            var user = new User
+            {
+                Name = request.Name,
+                Email = request.Email,
+                Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                RegistrationNumber = request.RegistrationNumber
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "User registered successfully" });
         }
-
-        var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
-        var user = new User
+        catch (Exception ex)
         {
-            Name = request.Name,
-            Email = request.Email,
-            Password = hashedPassword,
-            RegistrationNumber = request.RegistrationNumber,
-            CreatedAt = DateTime.UtcNow,
-        };
-
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
-
-        return Ok(new
-        {
-            message = "User registered",
-            data = new { user.Id, user.Name, user.Email, user.RegistrationNumber } // Included name in the response payload
-        });
+            return StatusCode(500, new { message = "An error occurred during registration.", error = ex.Message });
+        }
     }
 
     [HttpPost("login")]
-public async Task<ActionResult> Login([FromBody] LoginRequest request)
-{
-    if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+    public async Task<ActionResult> Login([FromBody] LoginRequest? request)
     {
-        return BadRequest(new { message = "Email and Password are required for login" });
-    }
-
-    var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-    if (user == null)
-    {
-        return Unauthorized(new { message = "Wrong email or password" });
-    }
-
-    // 1. Check if the account is currently locked out
-    if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
-    {
-        var remainingMinutes = Math.Ceiling((user.LockoutEnd.Value - DateTime.UtcNow).TotalMinutes);
-        return StatusCode(StatusCodes.Status423Locked, new { 
-            message = $"Hesabınız çok fazla başarısız giriş denemesi nedeniyle kilitlenmiştir. Lütfen {remainingMinutes} dakika sonra tekrar deneyin." 
-        });
-    }
-
-    // 2. Verify the password
-    if (!BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
-    {
-        // Increment the failed attempt counter
-        user.FailedAttemptCount++;
-
-        // If attempts reach 5, lock the account for 15 minutes
-        if (user.FailedAttemptCount >= 5)
+        if (request == null || string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
         {
-            user.LockoutEnd = DateTime.UtcNow.AddMinutes(15);
+            return BadRequest(new { message = "Email and Password are required for login" });
+        }
+
+        try
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
+            {
+                return Unauthorized(new { message = "Wrong email or password" });
+            }
+
+            var verificationCode = Random.Shared.Next(100000, 999999).ToString();
+
+            user.LoginVerificationCode = verificationCode;
+            user.LoginVerificationCodeExpiresAt = DateTime.UtcNow.AddMinutes(15);
             await _context.SaveChangesAsync();
-            return StatusCode(StatusCodes.Status423Locked, new { 
-                message = "Çok fazla başarısız deneme! Hesabınız 15 dakika boyunca kilitlendi." 
+
+            string subject = "Giriş Doğrulama Kodu";
+            string body = $"Merhaba {user.Name},\n\nGiriş yapmak için kullanacağınız 2FA doğrulama kodunuz: {verificationCode}\n\nBu kod 15 dakika süreyle geçerlidir.";
+
+            try
+            {
+                await _emailService.SendEmailAsync(user.Email, subject, body);
+            }
+            catch (Exception mailEx)
+            {
+                return StatusCode(500, new
+                {
+                    message = "Doğrulama e-postası gönderilemedi. Lütfen e-posta ayarlarınızı kontrol edin.",
+                    error = mailEx.Message
+                });
+            }
+
+            return Ok(new
+            {
+                requiresTwoFactor = true,
+                message = "Doğrulama kodu e-posta adresinize gönderildi."
             });
         }
-
-        await _context.SaveChangesAsync();
-        return Unauthorized(new { message = $"Hatalı şifre. Kalan deneme hakkınız: {5 - user.FailedAttemptCount}" });
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Giriş işlemi sırasında bir hata oluştu.", error = ex.Message });
+        }
     }
 
-    // 3. On successful login, reset the tracking flags
-    user.FailedAttemptCount = 0;
-    user.LockoutEnd = null;
-    await _context.SaveChangesAsync();
-
-    return Ok(new { 
-        message = "Login successful", 
-        data = new { user.Id, user.Name, user.Email } 
-    });
-}
-
     [HttpPost("update-password")]
-    public async Task<ActionResult> UpdatePassword([FromBody] UpdatePasswordRequest request)
+    public async Task<ActionResult> UpdatePassword([FromBody] UpdatePasswordRequest? request)
     {
-        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.NewPassword))
+        if (request == null ||
+            string.IsNullOrWhiteSpace(request.Email) ||
+            string.IsNullOrWhiteSpace(request.NewPassword))
         {
-            return BadRequest(new { message = "Email and new password are required" });
+            return BadRequest(new { message = "E-posta ve yeni şifre zorunludur." });
         }
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-        if (user == null)
+        try
         {
-            return NotFound(new { message = "User not found" });
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (user == null)
+            {
+                return NotFound(new { message = "Kullanıcı bulunamadı." });
+            }
+
+            user.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Şifre başarıyla güncellendi." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Şifre güncellenirken bir hata oluştu.", error = ex.Message });
+        }
+    }
+
+    [HttpPost("verify-login")]
+    public async Task<ActionResult> VerifyLogin([FromBody] VerifyLogin request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Code))
+        {
+            return BadRequest(new { message = "Email and verification code are required." });
         }
 
-        user.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-        user.UpdatedAt = DateTime.UtcNow;
+        try
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (user == null ||
+                user.LoginVerificationCode != request.Code ||
+                !user.LoginVerificationCodeExpiresAt.HasValue ||
+                user.LoginVerificationCodeExpiresAt.Value < DateTime.UtcNow)
+            {
+                return BadRequest(new { message = "Geçersiz veya süresi dolmuş doğrulama kodu." });
+            }
 
-        await _context.SaveChangesAsync();
+            user.LoginVerificationCode = null;
+            user.LoginVerificationCodeExpiresAt = null;
+            await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Password updated", updatedAt = user.UpdatedAt });
+            var token = "mock-jwt-token-string";
+
+            return Ok(new
+            {
+                message = "Giriş Başarılı",
+                token = token,
+                data = new { user.Id, user.Email }
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Doğrulama işlemi sırasında bir hata oluştu.", error = ex.Message });
+        }
     }
 }

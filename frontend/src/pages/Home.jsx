@@ -68,24 +68,24 @@ function Home({ adminMode = false, areas = [] }) {
     driving: null,
   });
   const handleToggleHeatmap = () => {
-  if (!showHeatmap) {
-    // Analiz moduna geçiliyor
+    if (!showHeatmap) {
+      // Analiz moduna geçiliyor
 
-    setSelectedArea(null);
-    setShowInfoCard(false);
+      setSelectedArea(null);
+      setShowInfoCard(false);
 
-    setRouteGeometry(null);
-    setRouteInfo(null);
+      setRouteGeometry(null);
+      setRouteInfo(null);
 
-    setRoutePanelOpen(false);
+      setRoutePanelOpen(false);
 
-    setStartPoint(null);
+      setStartPoint(null);
 
-    setIsSelectingStartPoint(false);
-  }
+      setIsSelectingStartPoint(false);
+    }
 
-  setShowHeatmap((prev) => !prev);
-};
+    setShowHeatmap((prev) => !prev);
+  };
   useEffect(() => {
     let cancelled = false;
     setIsLoadingAreas(true);
@@ -452,71 +452,76 @@ function Home({ adminMode = false, areas = [] }) {
   if (adminMode) {
     return (
       <>
-        <Toast ref={adminToast} position="top-right" baseZIndex={13000} />
-        <AdminLayout
-          activePage={adminPage}
-          pageTitle={
-            adminPage === 'list'
-              ? 'Toplanma Alanı Listesi'
-              : adminPage === 'suggestions'
-                ? 'Aday Alan Önerileri'
-                : adminPage === 'stats'
-                  ? 'Analizler & İstatistikler'
-                  : adminPage === 'activity'
-                    ? 'Son İşlemler'
-                    : 'Yönetici Paneli'
-          }
-          onNavigate={setAdminPage}
-          headerAction={
-            adminPage === 'list' ? (
-              <Button
-                className="alp-add-button"
-                label="Yeni Toplanma Alanı"
-                icon="pi pi-plus"
-                onClick={() => setAddAreaDialogOpen(true)}
-              />
-            ) : null
-          }
-          onLogout={() => {
-            localStorage.removeItem('adminUser');
-            navigate('/', { replace: true });
-          }}
-        >
-          {isLoadingAreas &&
-          ['dashboard', 'list', 'stats'].includes(adminPage) ? (
-            <p>GeoData yükleniyor...</p>
-          ) : areasError &&
+        <>
+          <Toast ref={adminToast} position="top-right" baseZIndex={13000} />
+
+          <AdminLayout
+            activePage={adminPage}
+            pageTitle={
+              adminPage === 'list'
+                ? 'Toplanma Alanı Listesi'
+                : adminPage === 'suggestions'
+                  ? 'Aday Alan Önerileri'
+                  : adminPage === 'stats'
+                    ? 'Analizler & İstatistikler'
+                    : adminPage === 'activity'
+                      ? 'Son İşlemler'
+                      : 'Yönetici Paneli'
+            }
+            onNavigate={setAdminPage}
+            headerAction={
+              adminPage === 'list' ? (
+                <Button
+                  className="alp-add-button"
+                  label="Yeni Toplanma Alanı"
+                  icon="pi pi-plus"
+                  onClick={() => setAddAreaDialogOpen(true)}
+                />
+              ) : null
+            }
+            onLogout={() => {
+              localStorage.removeItem('token');
+              localStorage.removeItem('adminUser');
+              navigate('/', { replace: true });
+            }}
+          >
+            {isLoadingAreas &&
             ['dashboard', 'list', 'stats'].includes(adminPage) ? (
-            <p role="alert">{areasError}</p>
-          ) : adminPage === 'list' ? (
-            <AreaListPage
-              areas={geoAreas}
-              onUpdate={handleUpdateArea}
-              onShowOnMap={showAreaOnAdminMap}
-              onDelete={handleDeleteArea}
+              <p>GeoData yükleniyor...</p>
+            ) : areasError &&
+              ['dashboard', 'list', 'stats'].includes(adminPage) ? (
+              <p role="alert">{areasError}</p>
+            ) : adminPage === 'list' ? (
+              <AreaListPage
+                areas={geoAreas}
+                onUpdate={handleUpdateArea}
+                onShowOnMap={showAreaOnAdminMap}
+                onDelete={handleDeleteArea}
+              />
+            ) : adminPage === 'suggestions' ? (
+              <CandidatePointsPage
+                onShowOnMap={showAreaOnAdminMap}
+                onAreaAccepted={handleCandidateAccepted}
+              />
+            ) : adminPage === 'stats' ? (
+              <AnalyticsPage areas={geoAreas} />
+            ) : adminPage === 'activity' ? (
+              <ActivityPage
+                onShowOnMap={showAreaOnAdminMap}
+                onUndoDelete={handleUndoDelete}
+              />
+            ) : (
+              mapContent
+            )}
+
+            <AddAreaDialog
+              visible={addAreaDialogOpen}
+              areaTypes={areaTypes}
+              onHide={() => setAddAreaDialogOpen(false)}
+              onSave={handleAddArea}
             />
-          ) : adminPage === 'suggestions' ? (
-            <CandidatePointsPage
-              onShowOnMap={showAreaOnAdminMap}
-              onAreaAccepted={handleCandidateAccepted}
-            />
-          ) : adminPage === 'stats' ? (
-            <AnalyticsPage areas={geoAreas} />
-          ) : adminPage === 'activity' ? (
-            <ActivityPage
-              onShowOnMap={showAreaOnAdminMap}
-              onUndoDelete={handleUndoDelete}
-            />
-          ) : (
-            mapContent
-          )}
-          <AddAreaDialog
-            visible={addAreaDialogOpen}
-            areaTypes={areaTypes}
-            onHide={() => setAddAreaDialogOpen(false)}
-            onSave={handleAddArea}
-          />
-        </AdminLayout>
+          </AdminLayout>
+        </>
       </>
     );
   }

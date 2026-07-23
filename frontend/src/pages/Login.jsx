@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-import AuthCard from "../components/AuthCard"; 
+import AuthCard from "../components/AuthCard";
 import { authService } from "../api/auth";
 import styles from "../styles/Login.module.css";
 
@@ -11,35 +11,35 @@ export default function LoginPage() {
     const [showRequestPass, setShowRequestPass] = useState(false);
     const [capsLock, setCapsLock] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
-
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
-    
-    const navigate = useNavigate(); 
+
+    const [isTwoFactorStep, setIsTwoFactorStep] = useState(false);
+    const [loginEmail, setLoginEmail] = useState("");
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         setError("");
         setSuccess("");
+        setIsTwoFactorStep(false);
     }, [tab]);
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
+        localStorage.removeItem('token');
+        localStorage.removeItem('adminUser');
     }, []);
 
     const validatePassword = (password) => {
-        if (password.length < 8) {
-            return "Şifre en az 8 karakter uzunluğunda olmalıdır.";
-        }
-        if (!/[A-Z]/.test(password)) {
-            return "Şifre en az bir büyük harf içermelidir.";
-        }
-        if (!/\d/.test(password)) {
-            return "Şifre en az bir rakam içermelidir.";
-        }
-        if (!/[^a-zA-Z0-9]/.test(password)) {
-            return "Şifre en az bir özel karakter içermelidir.";
-        }
+        if (!password || password.trim() === "") return "Şifre alanı boş bırakılamaz.";
+        if (/\s/.test(password)) return "Şifre boşluk karakteri içeremez.";
+        if (password.length < 8) return "Şifre en az 8 karakter uzunluğunda olmalıdır.";
+        if (!/[a-z]/.test(password)) return "Şifre en az bir küçük harf içermelidir.";
+        if (!/[A-Z]/.test(password)) return "Şifre en az bir büyük harf içermelidir.";
+        if (!/\d/.test(password)) return "Şifre en az bir rakam içermelidir.";
+        if (!/[^a-zA-Z0-9]/.test(password)) return "Şifre en az bir özel karakter içermelidir.";
         return null;
     };
 
@@ -47,61 +47,87 @@ export default function LoginPage() {
         e.preventDefault();
         setError("");
         setSuccess("");
-        
+
         const email = e.target.email.value;
         const password = e.target.password.value;
-        
+
         try {
             const data = await authService.login(email, password);
-            const adminUser = data?.data;
 
-            if (!adminUser) {
-                throw new Error('Sunucudan kullanıcı bilgisi alınamadı.');
+            if (data.requiresTwoFactor) {
+                setLoginEmail(email);
+                setIsTwoFactorStep(true);
+                setSuccess(data.message || "Doğrulama kodu e-posta adresinize gönderildi.");
+            } else {
+                localStorage.setItem('token', data.token);
+                setSuccess("Giriş başarılı! Admin paneline yönlendiriliyorsunuz...");
+
+                // Admin sayfasına yönlendirme eklendi
+                setTimeout(() => navigate("/admin"), 1500);
             }
-
-            localStorage.setItem('adminUser', JSON.stringify(adminUser));
-            setSuccess("Giriş başarılı! Yönetici paneline yönlendiriliyorsunuz...");
-            navigate('/admin', { replace: true });
         } catch (error) {
-            if (error.response?.status == 423){
-                setError(error.response.data.message);
-            }else{
-                setError(error.response?.data?.message || "Giriş başarısız.");
-            }
+            setError(error.response?.data?.message || "Giriş başarısız.");
+        }
+    };
+
+    const handleVerify2FA = async (e) => {
+        e.preventDefault();
+        setError("");
+        setSuccess("");
+
+        const code = e.target.twoFactorCode.value;
+
+        try {
+            const data = await authService.verifyLogin(loginEmail, code);
+            localStorage.setItem('token', data.token);
+            setSuccess("Doğrulama başarılı! Admin paneline yönlendiriliyorsunuz...");
+
+            // Admin sayfasına yönlendirme eklendi
+            setTimeout(() => {
+                navigate("/admin");
+            }, 1500);
+        } catch (error) {
+            setError(error.response?.data?.message || "Geçersiz veya süresi dolmuş doğrulama kodu.");
         }
     };
 
     const handleRegister = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
+        e.preventDefault();
+        setError("");
+        setSuccess("");
 
-    // 1. Capture ALL form values using the name attributes from AuthCard
-    const name = e.target.name.value;
-    const registrationNumber = e.target.registrationNumber.value;
-    const email = e.target.email.value;
-    const password = e.target.password.value;
+        const name = e.target.name.value;
+        const registrationNumber = e.target.registrationNumber.value;
+        const email = e.target.email.value;
+        const password = e.target.password.value;
 
-    // Validate the password layout local rules
-    const validationError = validatePassword(password);
-    if (validationError) {
-        setError(validationError);
-        return;
-    }
+        if (!registrationNumber) {
+            setError("Sicil numarası boş bırakılamaz.");
+            return;
+        }
+        if (/\s/.test(registrationNumber)) {
+            setError("Sicil numarası boşluk karakteri içeremez.");
+            return;
+        }
 
-    try {
-        // 2. Pass all required properties to the authentication service method
-        await authService.register(name, email, password, registrationNumber);
-        setSuccess("Kaydınız başarıyla gerçekleştirilmiştir! Giriş sayfasına yönlendiriliyorsunuz...");
-        
-        setTimeout(() => {
-            setTab('giris');
-            setSuccess("");
-        }, 2500);
-    } catch (error) {
-        setError(error.response?.data?.message || "Kayıt başarısız.");
-    }
-};
+        const validationError = validatePassword(password);
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+
+        try {
+            await authService.register(name, email, password, registrationNumber);
+            setSuccess("Kaydınız başarıyla gerçekleştirilmiştir! Giriş sayfasına yönlendiriliyorsunuz...");
+
+            setTimeout(() => {
+                setTab('giris');
+                setSuccess("");
+            }, 2500);
+        } catch (error) {
+            setError(error.response?.data?.message || "Kayıt başarısız.");
+        }
+    };
 
     const handleRedirectToUpdatePassword = () => {
         navigate('/update-password');
@@ -112,7 +138,7 @@ export default function LoginPage() {
             <div className={styles.leftPanel}>
                 <div className={styles.watermark}>AFAD</div>
                 <div className={styles.formWrapper}>
-                    
+
                     <AuthCard
                         tab={tab}
                         setTab={setTab}
@@ -127,12 +153,15 @@ export default function LoginPage() {
                         onChangePassword={handleRedirectToUpdatePassword}
                         error={error}
                         success={success}
+                        isTwoFactorStep={isTwoFactorStep}
+                        setIsTwoFactorStep={setIsTwoFactorStep}
+                        onVerify2FA={handleVerify2FA}
                     />
 
                     <div className={styles.footerLinks}>
-                        <a 
-                            href="#" 
-                            className={styles.footerLink} 
+                        <a
+                            href="#"
+                            className={styles.footerLink}
                             onClick={(e) => { e.preventDefault(); handleRedirectToUpdatePassword(); }}
                         >
                             Şifremi Unuttum

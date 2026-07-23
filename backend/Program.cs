@@ -5,7 +5,6 @@ using backend.Data.Seeders;
 using backend.Business.Interfaces;
 using backend.Business.Services;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers()
@@ -19,21 +18,20 @@ builder.Services.AddControllers()
 builder.Services.AddHttpClient<OsrmService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddScoped<
-    IToplanmaAlaniService,
-    ToplanmaAlaniService
->();
+
+// Business / Domain Servisleri
+builder.Services.AddScoped<IToplanmaAlaniService, ToplanmaAlaniService>();
 builder.Services.AddScoped<CandidatePointService>();
 builder.Services.AddScoped<ActivityLogService>();
+builder.Services.AddScoped<IEmailService, EmailService>(); // <-- EKLENEN SERVİS KAYDI
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
-        builder.Configuration.GetConnectionString(
-            "DefaultConnection"
-        ),
+        builder.Configuration.GetConnectionString("DefaultConnection"),
         npgsqlOptions => npgsqlOptions.UseNetTopologySuite()
     )
 );
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
@@ -52,10 +50,10 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
     await context.Database.MigrateAsync();
-    var changedCount = await ToplanmaAlaniSeeder.SeedAsync(context, app.Environment);
+    var insertedCount = await ToplanmaAlaniSeeder.SeedAsync(context, app.Environment);
 
-    if (changedCount > 0)
-        Console.WriteLine($"{changedCount} coğrafi kayıt PostgreSQL ile eşitlendi.");
+    if (insertedCount > 0)
+        Console.WriteLine($"{insertedCount} toplanma alanı PostgreSQL'e eklendi.");
 }
 
 if (app.Environment.IsDevelopment())
@@ -68,7 +66,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// app.UseHttpsRedirection(); 
+app.UseHttpsRedirection(); 
 app.UseCors("AllowReactApp");
 app.UseAuthorization();
 app.MapControllers();

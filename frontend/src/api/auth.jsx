@@ -17,4 +17,11 @@ export const authService = {
         });
         return response.data;
     },
+    verifyLogin: async (email, code) => {
+        const response = await api.post('/User/verify-login', {
+            email: email,
+            code: code
+        });
+        return response.data;
+    }
 };
