@@ -66,18 +66,20 @@ function InfoCard({
         }
       />
 
-      <InfoRow
-        icon={
-          <PlaceIcon
-            sx={{
-              color: COLORS.primary,
-              fontSize: 20,
-            }}
-          />
-        }
-        title={selectedArea.address ? 'Adres' : 'POI ID'}
-        value={selectedArea.address || selectedArea.poiId || 'Belirtilmemiş'}
-      />
+      {selectedArea.address && (
+        <InfoRow
+          icon={
+            <PlaceIcon
+              sx={{
+                color: COLORS.primary,
+                fontSize: 20,
+              }}
+            />
+          }
+          title="Adres"
+          value={selectedArea.address}
+        />
+      )}
 
       <InfoRow
         icon={

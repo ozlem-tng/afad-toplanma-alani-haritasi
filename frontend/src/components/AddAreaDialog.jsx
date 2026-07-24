@@ -15,7 +15,7 @@ const emptyArea = {
   longitude: null,
 };
 
-function AddAreaDialog({ visible, areaTypes, onHide, onSave }) {
+function AddAreaDialog({ visible, areaTypes, selectedPoint, onHide, onSave }) {
   const [area, setArea] = useState(emptyArea);
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -23,11 +23,15 @@ function AddAreaDialog({ visible, areaTypes, onHide, onSave }) {
 
   useEffect(() => {
     if (visible) {
-      setArea(emptyArea);
+      setArea({
+        ...emptyArea,
+        latitude: selectedPoint?.latitude ?? null,
+        longitude: selectedPoint?.longitude ?? null,
+      });
       setSubmitted(false);
       setSaveError('');
     }
-  }, [visible]);
+  }, [selectedPoint, visible]);
 
   const isValid =
     area.name.trim() &&
@@ -174,6 +178,13 @@ function AddAreaDialog({ visible, areaTypes, onHide, onSave }) {
             />
           </label>
         </div>
+
+        {selectedPoint && (
+          <small className="alp-coordinate-note">
+            <i className="pi pi-check-circle" />
+            Haritadan seçilen nokta kullanılıyor (zoom: {Math.round(selectedPoint.zoom)}).
+          </small>
+        )}
 
         {submitted && !isValid && (
           <small className="p-error">Zorunlu alanları ve geçerli koordinatları kontrol edin.</small>

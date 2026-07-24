@@ -32,6 +32,9 @@ function MapView({
   startPoint,
   isSelectingStartPoint,
   onSelectStartPoint,
+  isSelectingAreaPoint,
+  onSelectAreaPoint,
+  onAreaPointZoomWarning,
   routeGeometry,
   travelMode,
   showHeatmap,
@@ -253,6 +256,19 @@ function MapView({
   const handleMapClick = (event) => {
     if (!mapInstance.current) return;
 
+    if (isSelectingAreaPoint) {
+      const zoom = mapInstance.current.getView().getZoom() ?? 0;
+
+      if (zoom < 15) {
+        onAreaPointZoomWarning?.(zoom);
+        return;
+      }
+
+      const [longitude, latitude] = toLonLat(event.coordinate);
+      onSelectAreaPoint?.({ latitude, longitude, zoom });
+      return;
+    }
+
     // Başlangıç noktası seçme modu
     if (isSelectingStartPoint) {
       const [longitude, latitude] = toLonLat(event.coordinate);
@@ -342,7 +358,7 @@ function MapView({
       mapInstance.current?.setTarget(undefined);
       mapInstance.current = null;
     };
-  }, [isSelectingStartPoint]);
+  }, [isSelectingAreaPoint, isSelectingStartPoint]);
 
   useEffect(() => {
     if (!vectorSourceRef.current) return;

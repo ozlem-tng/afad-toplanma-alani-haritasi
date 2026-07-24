@@ -189,6 +189,12 @@
 .alp-form .p-dropdown:not(.p-disabled).p-focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, .13); background: #fff; }
 .alp-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }
 .alp-dialog-actions .p-button { min-height: 42px; padding-inline: 18px; border-radius: 10px; }
+.alp-coordinate-note { display: flex; align-items: center; gap: 7px; margin-top: -8px; color: #16713a; font-size: 12px; font-weight: 700; }
+.alp-coordinate-note i { color: #22a447; }
+
+.admin-map-selection-hint { position: absolute; z-index: 1000; top: 18px; left: 50%; display: flex; align-items: center; gap: 10px; max-width: calc(100% - 32px); padding: 11px 12px 11px 15px; border: 1px solid #f2cc74; border-radius: 12px; background: #fff9e8; color: #704b08; box-shadow: 0 8px 24px rgba(15, 35, 65, .18); font-size: 13px; font-weight: 700; transform: translateX(-50%); }
+.admin-map-selection-hint > i { color: #d8870b; font-size: 17px; }
+.admin-map-selection-hint button { min-height: 32px; margin-left: 5px; padding: 0 11px; border: 1px solid #dfbd6c; border-radius: 8px; background: #fff; color: #704b08; font: inherit; font-size: 11px; cursor: pointer; }
 
 .alp-confirm-dialog {
   width: 480px;

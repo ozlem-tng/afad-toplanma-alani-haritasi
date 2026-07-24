@@ -51,6 +51,8 @@ function Home({ adminMode = false, areas = [] }) {
   const [showInfoCard, setShowInfoCard] = useState(false);
   const [adminPage, setAdminPage] = useState('dashboard');
   const [addAreaDialogOpen, setAddAreaDialogOpen] = useState(false);
+  const [isSelectingAreaPoint, setIsSelectingAreaPoint] = useState(false);
+  const [newAreaPoint, setNewAreaPoint] = useState(null);
   const [previewArea, setPreviewArea] = useState(null);
   const [showHeatmap, setShowHeatmap] = useState(false);
 
@@ -189,6 +191,30 @@ function Home({ adminMode = false, areas = [] }) {
       detail: `${savedArea.name} veritabanına kaydedildi ve haritaya eklendi.`,
       life: 4500,
     });
+  };
+
+  const startAddingArea = () => {
+    setNewAreaPoint(null);
+    setAddAreaDialogOpen(false);
+    setIsSelectingAreaPoint(true);
+    setSelectedArea(null);
+    setShowInfoCard(false);
+    setRoutePanelOpen(false);
+    setRouteGeometry(null);
+    setShowHeatmap(false);
+    setAdminPage('dashboard');
+    adminToast.current?.show({
+      severity: 'info',
+      summary: 'Haritadan konum seçin',
+      detail: 'Haritayı yakınlaştırın ve yeni alanın konumuna tıklayın.',
+      life: 4500,
+    });
+  };
+
+  const handleSelectAreaPoint = (point) => {
+    setNewAreaPoint(point);
+    setIsSelectingAreaPoint(false);
+    setAddAreaDialogOpen(true);
   };
 
   const handleUpdateArea = async (area) => {
@@ -363,11 +389,31 @@ function Home({ adminMode = false, areas = [] }) {
         startPoint={startPoint}
         isSelectingStartPoint={isSelectingStartPoint}
         onSelectStartPoint={handleSelectStartPoint}
+        isSelectingAreaPoint={isSelectingAreaPoint}
+        onSelectAreaPoint={handleSelectAreaPoint}
+        onAreaPointZoomWarning={() =>
+          adminToast.current?.show({
+            severity: 'warn',
+            summary: 'Yeteri kadar yakınlaştırmadınız',
+            detail: 'Haritayı biraz daha yakınlaştırıp tekrar deneyin.',
+            life: 2800,
+          })
+        }
         routeGeometry={routeGeometry}
         travelMode={travelMode}
         showHeatmap={showHeatmap}
         height={adminMode ? '100%' : 'calc(100vh - 76px)'}
       />
+
+      {adminMode && isSelectingAreaPoint && (
+        <div className="admin-map-selection-hint" role="status">
+          <i className="pi pi-map-marker" />
+          <span>Haritayı yakınlaştırın, ardından yeni alanın konumuna tıklayın.</span>
+          <button type="button" onClick={() => setIsSelectingAreaPoint(false)}>
+            Vazgeç
+          </button>
+        </div>
+      )}
 
       {showNearestPanel && (
         <NearestAreasPanel
@@ -475,7 +521,7 @@ function Home({ adminMode = false, areas = [] }) {
                   className="alp-add-button"
                   label="Yeni Toplanma Alanı"
                   icon="pi pi-plus"
-                  onClick={() => setAddAreaDialogOpen(true)}
+                  onClick={startAddingArea}
                 />
               ) : null
             }
@@ -517,7 +563,11 @@ function Home({ adminMode = false, areas = [] }) {
             <AddAreaDialog
               visible={addAreaDialogOpen}
               areaTypes={areaTypes}
-              onHide={() => setAddAreaDialogOpen(false)}
+              selectedPoint={newAreaPoint}
+              onHide={() => {
+                setAddAreaDialogOpen(false);
+                setNewAreaPoint(null);
+              }}
               onSave={handleAddArea}
             />
           </AdminLayout>

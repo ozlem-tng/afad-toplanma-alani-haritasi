@@ -5,8 +5,8 @@ import '../styles/ActivityPage.css';
 const activityConfig = {
   ALAN_EKLENDI: { label: 'Alan eklendi', icon: 'pi-plus', className: 'added' },
   ALAN_GUNCELLENDI: { label: 'Alan düzenlendi', icon: 'pi-pencil', className: 'updated' },
-  ALAN_SILINDI: { label: 'Alan silindi', icon: 'pi-trash', className: 'deleted' },
-  ALAN_GERI_ALINDI: { label: 'Silme geri alındı', icon: 'pi-undo', className: 'added' },
+  ALAN_SILINDI: { label: 'Alan askıya alındı', icon: 'pi-trash', className: 'deleted' },
+  ALAN_GERI_ALINDI: { label: 'Askıya alma geri alındı', icon: 'pi-undo', className: 'added' },
   ADAY_KABUL_EDILDI: { label: 'Aday kabul edildi', icon: 'pi-check', className: 'added' },
   ADAY_REDDEDILDI: { label: 'Aday reddedildi', icon: 'pi-times', className: 'deleted' },
 };
@@ -34,7 +34,7 @@ function ActivityPage({ onShowOnMap, onUndoDelete }) {
         <article className="all"><i className="pi pi-list" /><span><small>Tüm işlemler</small><strong>{activities.length}</strong></span></article>
         <article className="added"><i className="pi pi-plus" /><span><small>Eklenen / kabul</small><strong>{activityCounts.added}</strong></span></article>
         <article className="updated"><i className="pi pi-pencil" /><span><small>Düzenlenen</small><strong>{activityCounts.updated}</strong></span></article>
-        <article className="deleted"><i className="pi pi-trash" /><span><small>Silinen / ret</small><strong>{activityCounts.deleted}</strong></span></article>
+        <article className="deleted"><i className="pi pi-trash" /><span><small>Askıya alınan / ret</small><strong>{activityCounts.deleted}</strong></span></article>
       </div>
 
       {error ? <div className="act-empty"><strong>{error}</strong></div> : activities.length === 0 ? (

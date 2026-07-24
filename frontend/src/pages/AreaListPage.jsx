@@ -103,12 +103,12 @@ function AreaListPage({ areas, onUpdate, onShowOnMap, onDelete }) {
         await onDelete(target);
         toast.current?.show({
           severity: 'success',
-          summary: 'Silindi',
-          detail: `${target.name} veritabanından kaldırıldı.`,
+          summary: 'Askıya alındı',
+          detail: `${target.name} pasife alındı.`,
           life: 3000,
         });
       } catch (error) {
-        toast.current?.show({ severity: 'error', summary: 'Silinemedi', detail: error.message, life: 4000 });
+        toast.current?.show({ severity: 'error', summary: 'Askıya alınamadı', detail: error.message, life: 4000 });
       }
     }, 0);
   };
@@ -126,7 +126,7 @@ function AreaListPage({ areas, onUpdate, onShowOnMap, onDelete }) {
         onClick={() => onShowOnMap(area)}
       />
       <Button icon="pi pi-pencil" severity="success" text rounded aria-label={`${area.name} alanını düzenle`} tooltip="Düzenle" onClick={() => { setSelected({ ...area }); setEditDialog(true); }} />
-      <Button icon="pi pi-trash" severity="danger" text rounded aria-label={`${area.name} alanını sil`} tooltip="Sil" onClick={() => setDeleteTarget(area)} />
+      <Button icon="pi pi-trash" severity="danger" text rounded aria-label={`${area.name} alanını askıya al`} tooltip="Askıya al" onClick={() => setDeleteTarget(area)} />
     </div>
   );
 
@@ -139,19 +139,19 @@ function AreaListPage({ areas, onUpdate, onShowOnMap, onDelete }) {
             <div className="alp-delete-header">
               <span className="alp-delete-icon"><i className="pi pi-exclamation-triangle" /></span>
               <div>
-                <h3 id="delete-dialog-title">Toplanma alanını sil</h3>
+                <h3 id="delete-dialog-title">Toplanma alanını askıya al</h3>
                 <p>Bu işlem için onay vermeniz gerekiyor.</p>
               </div>
               <button type="button" className="alp-delete-close" aria-label="Pencereyi kapat" onClick={() => setDeleteTarget(null)}><i className="pi pi-times" /></button>
             </div>
             <div className="alp-confirm-copy">
               <strong>{deleteTarget.name}</strong>
-              <span>toplanma alanını listeden silmek istediğinize emin misiniz?</span>
-              <small>Bu değişiklik yalnızca açık admin oturumunda geçerlidir.</small>
+              <span>toplanma alanını pasife almak istediğinize emin misiniz?</span>
+              <small>Bu işlemi Son İşlemler sayfasından geri alabilirsiniz.</small>
             </div>
             <div className="alp-delete-actions">
               <button type="button" className="alp-delete-cancel" onClick={() => setDeleteTarget(null)}>Vazgeç</button>
-              <button type="button" className="alp-delete-confirm" onPointerDown={confirmDelete}><i className="pi pi-trash" /> Evet, Sil</button>
+              <button type="button" className="alp-delete-confirm" onPointerDown={confirmDelete}><i className="pi pi-trash" /> Askıya Al</button>
             </div>
           </div>
         </div>
