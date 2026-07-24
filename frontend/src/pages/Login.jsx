@@ -13,6 +13,7 @@ export default function LoginPage() {
     const [currentTime, setCurrentTime] = useState(new Date());
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+    const [loading, setLoading] = useState(false); // 👈 Added loading state
 
     const [isTwoFactorStep, setIsTwoFactorStep] = useState(false);
     const [loginEmail, setLoginEmail] = useState("");
@@ -28,8 +29,6 @@ export default function LoginPage() {
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
-        localStorage.removeItem('token');
-        localStorage.removeItem('adminUser');
     }, []);
 
     const validatePassword = (password) => {
@@ -45,8 +44,11 @@ export default function LoginPage() {
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        if (loading) return; // 👈 Prevent duplicate executions if clicked repeatedly
+
         setError("");
         setSuccess("");
+        setLoading(true); // 👈 Block further requests
 
         const email = e.target.email.value;
         const password = e.target.password.value;
@@ -61,19 +63,22 @@ export default function LoginPage() {
             } else {
                 localStorage.setItem('token', data.token);
                 setSuccess("Giriş başarılı! Admin paneline yönlendiriliyorsunuz...");
-
-                // Admin sayfasına yönlendirme eklendi
                 setTimeout(() => navigate("/admin"), 1500);
             }
         } catch (error) {
             setError(error.response?.data?.message || "Giriş başarısız.");
+        } finally {
+            setLoading(false); // 👈 Re-enable button on complete or error
         }
     };
 
     const handleVerify2FA = async (e) => {
         e.preventDefault();
+        if (loading) return;
+
         setError("");
         setSuccess("");
+        setLoading(true);
 
         const code = e.target.twoFactorCode.value;
 
@@ -81,18 +86,20 @@ export default function LoginPage() {
             const data = await authService.verifyLogin(loginEmail, code);
             localStorage.setItem('token', data.token);
             setSuccess("Doğrulama başarılı! Admin paneline yönlendiriliyorsunuz...");
-
-            // Admin sayfasına yönlendirme eklendi
             setTimeout(() => {
                 navigate("/admin");
             }, 1500);
         } catch (error) {
             setError(error.response?.data?.message || "Geçersiz veya süresi dolmuş doğrulama kodu.");
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleRegister = async (e) => {
         e.preventDefault();
+        if (loading) return;
+
         setError("");
         setSuccess("");
 
@@ -116,6 +123,8 @@ export default function LoginPage() {
             return;
         }
 
+        setLoading(true);
+
         try {
             await authService.register(name, email, password, registrationNumber);
             setSuccess("Kaydınız başarıyla gerçekleştirilmiştir! Giriş sayfasına yönlendiriliyorsunuz...");
@@ -126,6 +135,8 @@ export default function LoginPage() {
             }, 2500);
         } catch (error) {
             setError(error.response?.data?.message || "Kayıt başarısız.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -138,7 +149,6 @@ export default function LoginPage() {
             <div className={styles.leftPanel}>
                 <div className={styles.watermark}>AFAD</div>
                 <div className={styles.formWrapper}>
-
                     <AuthCard
                         tab={tab}
                         setTab={setTab}
@@ -156,6 +166,7 @@ export default function LoginPage() {
                         isTwoFactorStep={isTwoFactorStep}
                         setIsTwoFactorStep={setIsTwoFactorStep}
                         onVerify2FA={handleVerify2FA}
+                        loading={loading} // 👈 Passed loading to AuthCard
                     />
 
                     <div className={styles.footerLinks}>
