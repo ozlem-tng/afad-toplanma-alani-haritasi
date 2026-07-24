@@ -15,7 +15,8 @@ export default function AuthCard({
     isTwoFactorStep,
     setIsTwoFactorStep,
     onVerify2FA,
-    loginEmail
+    loginEmail,
+    loading // 👈 Added prop
 }) {
     return (
         <div className={styles.card}>
@@ -41,6 +42,7 @@ export default function AuthCard({
                     <button
                         onClick={() => setTab("giris")}
                         className={`${styles.tabButton} ${tab === "giris" ? styles.tabActive : styles.tabInactive}`}
+                        disabled={loading}
                     >
                         GİRİŞ YAP
                         {tab === "giris" && <span className={styles.tabUnderline} />}
@@ -48,6 +50,7 @@ export default function AuthCard({
                     <button
                         onClick={() => setTab("yetki")}
                         className={`${styles.tabButton} ${tab === "yetki" ? styles.tabActive : styles.tabInactive}`}
+                        disabled={loading}
                     >
                         KAYIT OL
                         {tab === "yetki" && <span className={styles.tabUnderline} />}
@@ -88,17 +91,19 @@ export default function AuthCard({
                                     required 
                                     autoFocus
                                     autoComplete="one-time-code"
+                                    disabled={loading}
                                 />
                             </div>
                         </div>
-                        <button type="submit" className={styles.submitButton}>
-                            <Shield size={20} className={styles.submitIcon} /> KODU DOĞRULA 
+                        <button type="submit" className={styles.submitButton} disabled={loading}>
+                            <Shield size={20} className={styles.submitIcon} /> {loading ? "GÖNDERİLİYOR..." : "KODU DOĞRULA"}
                         </button>
                         <button 
                             type="button" 
                             className={styles.registerLinkButton} 
                             style={{ marginTop: "15px", width: "100%", textDecoration: "underline", background: "none", border: "none", cursor: "pointer" }}
                             onClick={() => setIsTwoFactorStep(false)}
+                            disabled={loading}
                         >
                             Giriş Ekranına Geri Dön
                         </button>
@@ -118,7 +123,7 @@ export default function AuthCard({
                             <label className={styles.label}>E-POSTA</label>
                             <div className={styles.inputWrapper}>
                                 <Mail className={styles.inputIcon} />
-                                <input type="email" name="email" placeholder="yonetici@afad.gov.tr" className={styles.input} required />
+                                <input type="email" name="email" placeholder="yonetici@afad.gov.tr" className={styles.input} required disabled={loading} />
                             </div>
                         </div>
                         <div>
@@ -143,9 +148,10 @@ export default function AuthCard({
                                     placeholder="••••••••"
                                     className={styles.inputPassword}
                                     required
+                                    disabled={loading}
                                     onKeyDown={(e) => setCapsLock(e.getModifierState("CapsLock"))}
                                 />
-                                <button type="button" onClick={() => setShowPass(!showPass)} className={styles.passwordToggle}>
+                                <button type="button" onClick={() => setShowPass(!showPass)} className={styles.passwordToggle} disabled={loading}>
                                     {showPass ? <EyeOff size={22} /> : <Eye size={22} />}
                                 </button>
                             </div>
@@ -155,8 +161,8 @@ export default function AuthCard({
                                 </div>
                             )}
                         </div>
-                        <button type="submit" className={styles.submitButton}>
-                            <Lock size={20} className={styles.submitIcon} /> GİRİŞ YAP
+                        <button type="submit" className={styles.submitButton} disabled={loading}>
+                            <Lock size={20} className={styles.submitIcon} /> {loading ? "GİRİŞ YAPILIYOR..." : "GİRİŞ YAP"}
                         </button>
                     </form>
                 </>
@@ -172,21 +178,21 @@ export default function AuthCard({
                             <label className={styles.registerLabel}>ŞUBE ADI</label>
                             <div className={styles.inputWrapper}>
                                 <User className={styles.registerIcon} />
-                                <input type="text" name="name" placeholder="AFAD" className={styles.registerInput} required />
+                                <input type="text" name="name" placeholder="AFAD" className={styles.registerInput} required disabled={loading} />
                             </div>
                         </div>
                         <div>
                             <label className={styles.registerLabel}>SİCİL NUMARASI</label>
                             <div className={styles.inputWrapper}>
                                 <FileKey2 className={styles.registerIcon} />
-                                <input type="text" name="registrationNumber" placeholder="123456" className={styles.registerInput} required />
+                                <input type="text" name="registrationNumber" placeholder="123456" className={styles.registerInput} required disabled={loading} />
                             </div>
                         </div>
                         <div>
                             <label className={styles.registerLabel}>E-POSTA</label>
                             <div className={styles.inputWrapper}>
                                 <Mail className={styles.registerIcon} />
-                                <input type="email" name="email" placeholder="ornek@afad.gov.tr" className={styles.registerInput} required />
+                                <input type="email" name="email" placeholder="ornek@afad.gov.tr" className={styles.registerInput} required disabled={loading} />
                             </div>
                         </div>
                         <div>
@@ -199,18 +205,19 @@ export default function AuthCard({
                                     placeholder="••••••••"
                                     className={styles.registerInputPassword}
                                     required
+                                    disabled={loading}
                                 />
-                                <button type="button" onClick={() => setShowRequestPass(!showRequestPass)} className={styles.registerPasswordToggle}>
+                                <button type="button" onClick={() => setShowRequestPass(!showRequestPass)} className={styles.registerPasswordToggle} disabled={loading}>
                                     {showRequestPass ? <EyeOff size={20} /> : <Eye size={20} />}
                                 </button>
                             </div>
                         </div>
-                        <button type="submit" className={styles.registerSubmit}>
-                            <FileKey2 size={18} className={styles.registerSubmitIcon} /> KAYIT OL
+                        <button type="submit" className={styles.registerSubmit} disabled={loading}>
+                            <FileKey2 size={18} className={styles.registerSubmitIcon} /> {loading ? "KAYDEDİLİYOR..." : "KAYIT OL"}
                         </button>
                     </form>
                     <p className={styles.registerLink}>
-                        Zaten hesabınız var mı? <button onClick={() => setTab("giris")} className={styles.registerLinkButton}>Giriş Yap</button>
+                        Zaten hesabınız var mı? <button onClick={() => setTab("giris")} className={styles.registerLinkButton} disabled={loading}>Giriş Yap</button>
                     </p>
                 </>
             )}

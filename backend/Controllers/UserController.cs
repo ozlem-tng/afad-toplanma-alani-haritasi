@@ -22,7 +22,7 @@ public class UserController : ControllerBase
         _context = context;
         _emailService = emailService;
     }
-    
+
 
     [HttpPost("register")]
     public async Task<ActionResult> Register([FromBody] RegisterRequest? request)
@@ -40,12 +40,27 @@ public class UserController : ControllerBase
             return BadRequest(new { message = "Name, email, password, and registration number are required." });
         }
 
+        if (request.RegistrationNumber.Length != 6 || !request.RegistrationNumber.All(char.IsDigit))
+        {
+            return BadRequest(new { message = "Sicil numarası sadece 6 haneli sayılardan oluşmalıdır." });
+        }
+
         try
         {
-            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            var existingUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == request.Email || u.RegistrationNumber == request.RegistrationNumber);
+
             if (existingUser != null)
             {
-                return BadRequest(new { message = "Kayıtlı kullanıcı zaten var"});
+                if (existingUser.Email == request.Email)
+                {
+                    return BadRequest(new { message = "Bu e-posta adresi ile kayıtlı kullanıcı zaten var." });
+                }
+
+                if (existingUser.RegistrationNumber == request.RegistrationNumber)
+                {
+                    return BadRequest(new { message = "Bu sicil / kayıt numarası ile kullanıcı zaten var." });
+                }
             }
 
             var user = new User
