@@ -241,6 +241,8 @@
 .alp-toast .p-toast-detail { margin: 0; font-size: 13px; line-height: 1.45; }
 .alp-toast .p-toast-message-success { border-left: 5px solid #22a447; background: #f3fff6; color: #176b32; }
 .alp-toast .p-toast-message-warn { border-left: 5px solid #e99a16; background: #fffaf0; color: #88520a; }
+.alp-toast .p-toast-message-info { border-left: 5px solid #2f7ec1; background: #f1f8ff; color: #195887; }
+.alp-toast .p-toast-message-error { border-left: 5px solid #dc3545; background: #fff4f5; color: #9d202d; }
 .alp-toast .p-toast-icon-close { width: 30px; height: 30px; margin: -3px -5px 0 5px; }
 
 @media (max-width: 900px) {

@@ -151,7 +151,7 @@ function CandidatePointsPage({ onShowOnMap, onAreaAccepted }) {
 
   return (
     <section className="cnd-page">
-      <Toast ref={toast} position="top-right" baseZIndex={12000} />
+      <Toast ref={toast} position="top-right" baseZIndex={12000} className="alp-toast" />
 
       <div className="cnd-summary-grid">
         <article className="cnd-summary total"><i className="pi pi-map" /><div><span>Toplam aday</span><strong>{counts.all}</strong></div></article>

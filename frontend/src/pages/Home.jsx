@@ -499,7 +499,7 @@ function Home({ adminMode = false, areas = [] }) {
     return (
       <>
         <>
-          <Toast ref={adminToast} position="top-right" baseZIndex={13000} />
+          <Toast ref={adminToast} position="top-right" baseZIndex={13000} className="alp-toast" />
 
           <AdminLayout
             activePage={adminPage}
