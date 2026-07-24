@@ -30,8 +30,15 @@ export default function UpdatePassword() {
         const email = e.target.email.value;
         const newPassword = e.target.newPassword.value;
 
-         if (!password || password.trim() === "") return "Şifre alanı boş bırakılamaz.";
-        if (/\s/.test(password)) return "Şifre boşluk karakteri içeremez.";
+        // ✅ Fixed variable references and state handling
+        if (!newPassword || newPassword.trim() === "") {
+            setError("Şifre alanı boş bırakılamaz.");
+            return;
+        }
+        if (/\s/.test(newPassword)) {
+            setError("Şifre boşluk karakteri içeremez.");
+            return;
+        }
         
         if (!email || !newPassword) {
             setError("Lütfen tüm alanları doldurun.");
