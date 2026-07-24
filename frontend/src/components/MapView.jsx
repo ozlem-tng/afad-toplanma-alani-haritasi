@@ -23,6 +23,7 @@ import { COLORS } from '../styles/colors';
 const DEFAULT_CENTER = fromLonLat([32.8597, 39.9179]);
 const DEFAULT_ZOOM = 11;
 const SELECTED_AREA_ZOOM = 16;
+const MIN_START_POINT_ZOOM = 15;
 
 function MapView({
   areas = [],
@@ -38,6 +39,7 @@ function MapView({
   routeGeometry,
   travelMode,
   showHeatmap,
+  onZoomChange,
   height,
 }) {
   const mapRef = useRef(null);
@@ -271,6 +273,12 @@ function MapView({
 
     // Başlangıç noktası seçme modu
     if (isSelectingStartPoint) {
+      const currentZoom = mapInstance.current.getView().getZoom();
+
+      if (currentZoom < MIN_START_POINT_ZOOM) {
+        return;
+      }
+
       const [longitude, latitude] = toLonLat(event.coordinate);
 
       onSelectStartPoint?.({
@@ -280,7 +288,6 @@ function MapView({
 
       return;
     }
-
     const areaFeature = mapInstance.current.forEachFeatureAtPixel(
       event.pixel,
       (feature) => {
@@ -347,6 +354,11 @@ function MapView({
         center: DEFAULT_CENTER,
         zoom: DEFAULT_ZOOM,
       }),
+    });
+
+    mapInstance.current.getView().on('change:resolution', () => {
+      const zoom = mapInstance.current?.getView().getZoom();
+      onZoomChange?.(zoom >= MIN_START_POINT_ZOOM);
     });
 
     styleZoomButtons();

@@ -28,7 +28,8 @@ import {
 } from '../api/toplanmaAlanlari';
 import { getNearestAreas } from '../services/nearestAreaService';
 import AnalysisButton from '../components/AnalysisButton';
-
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 function Home({ adminMode = false, areas = [] }) {
   const navigate = useNavigate();
   const adminToast = useRef(null);
@@ -55,6 +56,7 @@ function Home({ adminMode = false, areas = [] }) {
   const [newAreaPoint, setNewAreaPoint] = useState(null);
   const [previewArea, setPreviewArea] = useState(null);
   const [showHeatmap, setShowHeatmap] = useState(false);
+  const [canSelectStartPoint, setCanSelectStartPoint] = useState(false);
 
   const emptyFilters = {
     district: '',
@@ -402,8 +404,28 @@ function Home({ adminMode = false, areas = [] }) {
         routeGeometry={routeGeometry}
         travelMode={travelMode}
         showHeatmap={showHeatmap}
+        isSelectingStartPoint={isSelectingStartPoint}
+        onZoomChange={setCanSelectStartPoint}
         height={adminMode ? '100%' : 'calc(100vh - 76px)'}
       />
+      <Snackbar
+        open={isSelectingStartPoint}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          severity={canSelectStartPoint ? 'success' : 'info'}
+          variant="filled"
+          sx={{
+            width: '100%',
+            minWidth: 400,
+            boxShadow: 3,
+          }}
+        >
+          {canSelectStartPoint
+            ? 'Başlangıç noktası seçilebilir. Haritada istediğiniz noktaya tıklayın.'
+            : 'Başlangıç noktasını seçebilmek için haritaya yakınlaşın.'}
+        </Alert>
+      </Snackbar>
 
       {adminMode && isSelectingAreaPoint && (
         <div className="admin-map-selection-hint" role="status">
@@ -481,7 +503,10 @@ function Home({ adminMode = false, areas = [] }) {
         onTravelModeChange={setTravelMode}
         startPoint={startPoint}
         onUseCurrentLocation={() => handleUseCurrentLocation()}
-        onSelectFromMap={() => setIsSelectingStartPoint(true)}
+        onSelectFromMap={() => {
+          setCanSelectStartPoint(false);
+          setIsSelectingStartPoint(true);
+        }}
         onSearchAddress={() =>
           alert('Adres arama özelliği henüz kullanıma hazır değil.')
         }
