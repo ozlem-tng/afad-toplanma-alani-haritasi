@@ -1,0 +1,41 @@
+.act-page { height: 100%; box-sizing: border-box; overflow: auto; padding: 24px; background: #f4f7fb; color: #24364d; }
+.act-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+.act-summary-grid article { display: flex; min-height: 72px; box-sizing: border-box; align-items: center; gap: 12px; padding: 13px 16px; border: 1px solid #e0e7f0; border-radius: 14px; background: #fff; box-shadow: 0 5px 17px rgba(31, 56, 86, .045); }
+.act-summary-grid article > i { display: grid; width: 39px; height: 39px; flex: 0 0 39px; place-items: center; border-radius: 11px; }
+.act-summary-grid article > span { display: grid; gap: 2px; }
+.act-summary-grid small { color: #758398; font-size: 10px; font-weight: 750; }
+.act-summary-grid strong { color: #263a53; font-size: 19px; }
+.act-summary-grid .all > i { background: #eaf3fc; color: #3478b9; }
+.act-summary-grid .added > i { background: #e8f7ed; color: #248247; }
+.act-summary-grid .updated > i { background: #eef0fb; color: #626dc0; }
+.act-summary-grid .deleted > i { background: #ffedef; color: #c33e4a; }
+.act-list { display: grid; gap: 10px; }
+.act-item { display: grid; grid-template-columns: 42px minmax(220px, 1fr) 180px 142px; min-height: 72px; box-sizing: border-box; align-items: center; gap: 14px; padding: 13px 16px; border: 1px solid #e1e7ef; border-radius: 13px; background: #fff; box-shadow: 0 4px 14px rgba(35, 57, 87, .04); transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+.act-item:hover { border-color: #cddbea; box-shadow: 0 8px 20px rgba(35, 57, 87, .075); transform: translateY(-1px); }
+.act-icon { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 11px; }
+.act-icon.added { background: #e8f7ed; color: #249149; }
+.act-icon.updated { background: #eaf3fc; color: #3478b9; }
+.act-icon.deleted { background: #fff0f1; color: #d84a55; }
+.act-copy { min-width: 0; }
+.act-copy div { display: flex; min-width: 0; align-items: center; gap: 9px; }
+.act-copy strong { overflow: hidden; color: #1c2d45; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.act-copy p { margin: 5px 0 0; color: #78869a; font-size: 12px; }
+.act-badge { padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 800; }
+.act-badge.added { background: #e8f7ed; color: #247c42; }
+.act-badge.updated { background: #eaf3fc; color: #316fa9; }
+.act-badge.deleted { background: #fff0f1; color: #bf3f49; }
+.act-badge.undone { background: #edf7ff; color: #276795; }
+.act-item time { display: inline-flex; align-items: center; justify-content: flex-start; gap: 7px; color: #77869a; font-size: 10.5px; white-space: nowrap; }
+.act-item time i { color: #9aa8b8; }
+.act-item button { display: inline-flex; width: 142px; min-height: 36px; box-sizing: border-box; align-items: center; justify-content: center; gap: 6px; padding: 8px 10px; border-radius: 9px; font: inherit; font-size: 10.5px; font-weight: 800; cursor: pointer; }
+.act-item .act-map-button { border: 1px solid #bfd8ef; background: #ecf5fd; color: #255d91; }
+.act-item .act-map-button:hover { background: #dceefd; }
+.act-item .act-undo-button { border: 1px solid #d5414d; background: #df4350; color: #fff; box-shadow: 0 4px 9px rgba(211, 59, 72, .14); }
+.act-item .act-undo-button:hover { background: #c93643; }
+.act-action-placeholder { width: 142px; color: #c0c8d2; text-align: center; }
+.act-empty { display: grid; min-height: 300px; place-content: center; justify-items: center; gap: 8px; border: 1px dashed #cad5e3; border-radius: 16px; background: #fff; color: #8490a2; text-align: center; }
+.act-empty i { margin-bottom: 6px; color: #9aabc0; font-size: 34px; }
+.act-empty strong { color: #40516a; }
+.act-empty span { font-size: 12px; }
+@media (max-width: 1050px) { .act-summary-grid { grid-template-columns: repeat(2, 1fr); } .act-item { grid-template-columns: 42px minmax(180px, 1fr) 160px; } .act-item button, .act-action-placeholder { grid-column: 2 / -1; width: 142px; justify-self: end; } }
+@media (max-width: 680px) { .act-page { padding: 14px; } .act-summary-grid { grid-template-columns: 1fr 1fr; } .act-item { grid-template-columns: 40px minmax(0, 1fr); } .act-item time { grid-column: 2; } .act-item button, .act-action-placeholder { grid-column: 2; justify-self: start; } .act-copy div { align-items: flex-start; flex-direction: column; gap: 5px; } }
